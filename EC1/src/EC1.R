@@ -1,6 +1,7 @@
 rm(list=ls())
 
 library(car)
+library(effectsize)
 
 ########################
 # Esquemático EC1 (sugerido):
@@ -155,11 +156,16 @@ shapiro.test(data_PPGEE_full_M$IMC[data_PPGEE_full_M$Year == 2017])
 ########################
 # Verificando o poder dos testes
 
-# Feminino
+# Calculando o desvio padrão agregado e o poder do teste feminino
+agg_sd_F <- sd_pooled(data_PPGEE_2016_F$IMC, data_PPGEE_2017_F$IMC)
+
 power_f <- power.t.test(n=nrow(data_PPGEE_full_F), delta=sd(data_PPGEE_full_F$IMC), sd=sd(data_PPGEE_full_F$IMC),
              sig.level=0.05, type="two.sample", alternative = "two.sided")$power
 
 print(paste("Poder teste feminino: ", round(power_f,4)))
+
+# Calculando o desvio padrão agregado e o poder do teste masculino
+agg_sd_M <- sd_pooled(data_PPGEE_2016_M$IMC, data_PPGEE_2017_M$IMC)
 
 # Masculino
 power_m <- power.t.test(n=nrow(data_PPGEE_full_M), delta=sd(data_PPGEE_full_M$IMC), sd=sd(data_PPGEE_full_M$IMC),
