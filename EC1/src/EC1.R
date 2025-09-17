@@ -135,7 +135,7 @@ tam_efeito_m <- unname(abs(res_ttest_m$estimate[2] - res_ttest_m$estimate[1]))
 print(paste("Tamanho do efeito: ", round(tam_efeito_m,4)))
 
 ########################
-# Normality tests
+# Verificação de normalidade
 
 qqPlot(data_PPGEE_full_F$IMC, groups = data_PPGEE_full_F$Year,
        cex = 1.5, pch = 16, las = 1, layout = c(2,1))
@@ -152,6 +152,16 @@ qqPlot(data_PPGEE_full_M$IMC, groups = data_PPGEE_full_M$Year,
 shapiro.test(data_PPGEE_full_M$IMC[data_PPGEE_full_M$Year == 2016])
 # Resultado Shapiro masculino 2017
 shapiro.test(data_PPGEE_full_M$IMC[data_PPGEE_full_M$Year == 2017])
+
+########################
+# Verificação de independência
+
+dw_model_F <- lm(IMC ~ Year, data=data_PPGEE_full_F)
+durbinWatsonTest(dw_model_F)
+
+dw_model_M <- lm(IMC ~ Year, data=data_PPGEE_full_M)
+durbinWatsonTest(dw_model_M)
+
 
 ########################
 # Verificando o poder dos testes
