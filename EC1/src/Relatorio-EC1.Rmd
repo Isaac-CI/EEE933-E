@@ -1,15 +1,16 @@
 ---
-title: 'Case Study 00: This is a template'
-author: "Author 1 and Author 2"
-date: "March 00, 2015"
+title: 'Estudo de Caso 01: Comparação do IMC médio de alunos do PPGEE-UFMG ao longo de dois semestres'
+author: "Homero Castro, Isaac Marinho e Stéfani Verissimo"
+date: "17 de setembro, 2025"
 output:
   pdf_document:
+    latex_engine: xelatex
     fig_caption: yes
   html_document:
     df_print: paged
 ---
 
-```{r setup,results='hide',warning=FALSE,echo=FALSE}
+```{r setup, results='hide', warning=FALSE, echo=FALSE, message=FALSE}
 # A few initial definitions just to make sure all required packages are installed. Change as needed.
 # NOTE: It may echo some weird messages to the PDF on the first compile (package installation messages). Run twice and the problem will (hopefully) go away.
 
@@ -29,18 +30,9 @@ if (!require(GGally, quietly = TRUE)){
   install.packages("GGally", repos = cran_mirror)
 }
 ```
-## Summary
-This document provides a template for the Case Study reports. Reports should always start a short executive summary (call it an _Abstract_ if you want) to give the reader a general idea of the topic under investigation, the kind of analysis performed, the results obtained, and the general recommendations of the authors.
 
-There are (at least) two ways to render this document to **pdf** in R: one easy and one... well, less easy.
 
-### 1. The easy way
-Use [RStudio](http://rstudio.com/) as your editor, open the **.Rmd** file and click the _Knit PDF_ button at the top of the editor.
-
-### 2. The slightly-less-easy way
-If you're using any other R editor (such as the basic [R](http://cran.r-project.org) editor), you have to use the _render()_ function from the **rmarkdown** package:
-
-```{r, eval=F}
+```{r, eval=F, echo=FALSE}
 install.packages("devtools")                    # you only have to install it once
 library(devtools)
 install_github("rstudio/rmarkdown")             # you only have to install it once
@@ -48,52 +40,133 @@ library(rmarkdown)
 render("report_template.Rmd","pdf_document")    # this renders the pdf
 ```
 
-## Experimental design
-A section detailing the experimental setup. This is the place where you will define your test hypotheses, e.g.:
-$$\begin{cases} H_0: \mu = 10&\\H_1: \mu<10\end{cases}$$
 
-including the reasons behind your choices of the value for $H_0$ and the directionality (or not) of $H_1$. 
+## Introdução
+Esse estudo de caso tem como objetivo comparar o Índice de Massa Corporal (IMC) entre estudantes do Programa de Pós Graduação em Engenharia Elétrica da Universidade Federal de Minas Gerais (PPGEE-UFMG) entre os semestres de 2016/2 e 2017/1. O IMC é uma métrica altamente difundida e usada para indicar se ua determinada pessoa está na faixa de peso ideal. O seu cálculo é feito a partir da equação abaixo.
 
-This is also the place where you should discuss (whenever necessary) your definitions of minimally relevant effects ($\delta^*$), sample size calculations, choice of power and significance levels, and any other relevant information about specificities in your data collection procedures.
+$$
+IMC = \frac{h}{w^2} \text{, sendo }
+\begin{cases}
+h= \text{altura [cm]} \\
+w= \text{peso [kg]}
+\end{cases}
+$$
 
-### Description of the data collection
-Whenever needed, you can also include an (optional) subsection describing the actual data collection, how it was performed, any adaptations or unexpected events that may have occurred, etc. Subsections like this can also be used for the sample size calculations or any other aspect that requires a longer discussion.
+### 1. Seleção e modificação dos dados
 
-## Exploratory Data Analysis
-The first step is to load and preprocess the data. For instance,
-```{r loaddata}
-data(mtcars)
-fc<-c(2,8:11)
-for (i in 1:length(fc)){mtcars[,fc[i]]<-as.factor(mtcars[,fc[i]])}
-levels(mtcars$am) <- c("Automatic","Manual")
+```{r, echo=TRUE}
+# Loading data
+
+data_2016 <- read.csv('../data/imc_20162.csv')
+data_2017 <- read.csv('../data/CS01_20172.csv', sep=';')
+
+# Selecting only PPGEE students
+data_PPGEE_2016 <- data_2016[data_2016$Course == 'PPGEE',]
+data_PPGEE_2017 <- data_2017
+
+# Labeling the years
+data_PPGEE_2016$Year <- 2016
+data_PPGEE_2017$Year <- 2017
+
+########################
+# IMC calc. (Weight[kg]/(Height[m]^2))
+
+data_PPGEE_2016$IMC = data_PPGEE_2016$Weight.kg/(data_PPGEE_2016$Height.m**2)
+data_PPGEE_2017$IMC = data_PPGEE_2017$Weight.kg/(data_PPGEE_2017$height.m**2)
+
+########################
+# Women DF
+data_PPGEE_2016_F <- data_PPGEE_2016[data_PPGEE_2016$Gender == 'F',]
+data_PPGEE_2017_F <- data_PPGEE_2017[data_PPGEE_2017$Sex == 'F',]
+
+data_PPGEE_full_F <- data.frame(Year = c(data_PPGEE_2016_F$Year, data_PPGEE_2017_F$Year),
+                           IMC = c(data_PPGEE_2016_F$IMC, data_PPGEE_2017_F$IMC))
+
+# Men DF
+data_PPGEE_2016_M <- data_PPGEE_2016[data_PPGEE_2016$Gender == 'M',]
+data_PPGEE_2017_M <- data_PPGEE_2017[data_PPGEE_2017$Sex == 'M',]
+
+data_PPGEE_full_M <- data.frame(Year = c(data_PPGEE_2016_M$Year, data_PPGEE_2017_M$Year),
+                           IMC = c(data_PPGEE_2016_M$IMC, data_PPGEE_2017_M$IMC))
 ```
 
-To get an initial feel for the relationships between the relevant variables of your experiment it is frequently interesting to perform some preliminary (exploratory) analysis. This is frequently referred to as _getting a feel_ of your data, and can suggest procedures (such as outlier investigation or data transformations) to experienced experimenters.
+## Metodologia
 
-```{r pairs,fig.width=8,echo=TRUE,message=FALSE,fig.cap="Exploring the effect of car transmission on mpg values"}
-library(GGally,quietly = T, warn.conflicts = F) # This is just me getting fancy.
-                                                # There are much simpler ways ;-)
-ggpairs(data=mtcars,columns=c(1,9),title="MPG by transmission type",
-        upper=list(combo="box"),lower=list(combo="facethist"),
-        diag=list(continuous="densityDiag",discrete="barDiag"))
-```
+### 1. Separação entre sexos
 
-Your preliminary analysis should be described together with the plots. In this example, two facts are immediately clear from the plots: first, **mpg** tends to correlate well with many of the other variables, most intensely with **drat** (positively) and **wt** (negatively). It is also clear that many of the variables are highly correlated (e.g., **wt** and **disp**). Second, it seems like manual transmission models present larger values of **mpg** than the automatic ones. In the next section a linear model will be fit to the data in order to investigate the significance and magnitude of this possible effect.
+A faixa de peso ideal usada de base para o cálculo do IMC é diferente para homens e mulheres, devido a questões fisiológicas. Assim sendo, julgou-se pertinente analisar separadamente cada um dos sexos, verificando se os IMCs de cada sexo foram diferentes entre os semestres analisados.
 
-## Statistical Analysis
-Your statistical analysis should come here. This is the place where you should fit your statistical model, get the results of your significance test, your effect size estimates and confidence intervals.
+### 2. Hipóteses levantadas e escolha do teste
 
-```{r fitmodel,results='hold'}
-model<-aov(mpg~am*disp,data=mtcars)
-summary(model)
-```
+Para ambos os casos, sexo feminino e masculino, a hipótese nula representa a igualdade entre as médias dos IMCs nos dois períodos enquanto a hipótese alternativa defende que as médias são diferentes entre os semestres, ou seja, para o caso feminino, têm-se:
 
-### Checking Model Assumptions
-The assumptions of your test should also be validated, and possible effects of violations should also be explored.
-```{r resplots,fig.width=8,echo=TRUE,message=FALSE, fig.cap = "Residual plots for the anova model"}
-par(mfrow=c(2,2), mai=.3*c(1,1,1,1))
-plot(model,pch=16,lty=1,lwd=2)
-```
+$$
+\begin{cases}
+H_0: \mu_{F_{2016}}=\mu_{F_{2017}} \\
+H_1: \mu_{F_{2016}} \neq \mu_{F_{2017}}
+\end{cases}
+$$
+já para o masculino, a representação matemática é:
+$$
+\begin{cases}
+H_0: \mu_{M_{2016}}=\mu_{M_{2017}} \\
+H_1: \mu_{M_{2016}} \neq \mu_{M_{2017}}
+\end{cases}
+$$
 
-### Conclusions and Recommendations
-The discussion of your results, and the scientific/technical meaning of the effects detected, should be placed here. Always be sure to tie your results back to the original question of interest!
+Para a escolha dos teste, foi necessário avalar a normalidade e a homocedasticidade dos dados, e para tal foram usados os testes de _Shapiro-Wilk_ e _Fligner-Killen_, respectivamente.
+
+
+
+
+
+
+<!-- ## Experimental design -->
+<!-- A section detailing the experimental setup. This is the place where you will define your test hypotheses, e.g.: -->
+<!-- $$\begin{cases} H_0: \mu = 10&\\H_1: \mu<10\end{cases}$$ -->
+
+<!-- including the reasons behind your choices of the value for $H_0$ and the directionality (or not) of $H_1$.  -->
+
+<!-- This is also the place where you should discuss (whenever necessary) your definitions of minimally relevant effects ($\delta^*$), sample size calculations, choice of power and significance levels, and any other relevant information about specificities in your data collection procedures. -->
+
+<!-- ### Description of the data collection -->
+<!-- Whenever needed, you can also include an (optional) subsection describing the actual data collection, how it was performed, any adaptations or unexpected events that may have occurred, etc. Subsections like this can also be used for the sample size calculations or any other aspect that requires a longer discussion. -->
+
+<!-- ## Exploratory Data Analysis -->
+<!-- The first step is to load and preprocess the data. For instance, -->
+<!-- ```{r loaddata} -->
+<!-- data(mtcars) -->
+<!-- fc<-c(2,8:11) -->
+<!-- for (i in 1:length(fc)){mtcars[,fc[i]]<-as.factor(mtcars[,fc[i]])} -->
+<!-- levels(mtcars$am) <- c("Automatic","Manual") -->
+<!-- ``` -->
+
+<!-- To get an initial feel for the relationships between the relevant variables of your experiment it is frequently interesting to perform some preliminary (exploratory) analysis. This is frequently referred to as _getting a feel_ of your data, and can suggest procedures (such as outlier investigation or data transformations) to experienced experimenters. -->
+
+<!-- ```{r pairs,fig.width=8,echo=TRUE,message=FALSE,fig.cap="Exploring the effect of car transmission on mpg values"} -->
+<!-- library(GGally,quietly = T, warn.conflicts = F) # This is just me getting fancy. -->
+<!--                                                 # There are much simpler ways ;-) -->
+<!-- ggpairs(data=mtcars,columns=c(1,9),title="MPG by transmission type", -->
+<!--         upper=list(combo="box"),lower=list(combo="facethist"), -->
+<!--         diag=list(continuous="densityDiag",discrete="barDiag")) -->
+<!-- ``` -->
+
+<!-- Your preliminary analysis should be described together with the plots. In this example, two facts are immediately clear from the plots: first, **mpg** tends to correlate well with many of the other variables, most intensely with **drat** (positively) and **wt** (negatively). It is also clear that many of the variables are highly correlated (e.g., **wt** and **disp**). Second, it seems like manual transmission models present larger values of **mpg** than the automatic ones. In the next section a linear model will be fit to the data in order to investigate the significance and magnitude of this possible effect. -->
+
+<!-- ## Statistical Analysis -->
+<!-- Your statistical analysis should come here. This is the place where you should fit your statistical model, get the results of your significance test, your effect size estimates and confidence intervals. -->
+
+<!-- ```{r fitmodel,results='hold'} -->
+<!-- model<-aov(mpg~am*disp,data=mtcars) -->
+<!-- summary(model) -->
+<!-- ``` -->
+
+<!-- ### Checking Model Assumptions -->
+<!-- The assumptions of your test should also be validated, and possible effects of violations should also be explored. -->
+<!-- ```{r resplots,fig.width=8,echo=TRUE,message=FALSE, fig.cap = "Residual plots for the anova model"} -->
+<!-- par(mfrow=c(2,2), mai=.3*c(1,1,1,1)) -->
+<!-- plot(model,pch=16,lty=1,lwd=2) -->
+<!-- ``` -->
+
+<!-- ### Conclusions and Recommendations -->
+<!-- The discussion of your results, and the scientific/technical meaning of the effects detected, should be placed here. Always be sure to tie your results back to the original question of interest! -->
