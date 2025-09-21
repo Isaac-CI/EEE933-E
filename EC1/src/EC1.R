@@ -165,23 +165,3 @@ power_m <- power.t.test(n=nrow(data_PPGEE_full_M), delta=sd(data_PPGEE_full_M$IM
                         sig.level=0.05, type="two.sample", alternative = "two.sided")$power
 
 print(paste("Poder teste masculino: ", round(power_m,4)))
-
-####
-# A princípio não se sabe se as variâncias são iguais, logo realiza-se o teste t de Welch.
-# Por já termos os dados talvez possamos inverter a ordem, fazer as verificações de normalidade,
-# homocedasticidade e independência e escolher o melhor método previamente.
-####
-
-# welch t-test - two_sample - women
-
-t.test(data_PPGEE_full_F$IMC ~ data_PPGEE_full_F$Year,
-       alternative = "two.sided",
-       mu = 0,
-       conf.level = 0.95)
-
-# welch t-test - two_sample - men
-
-t.test(data_PPGEE_full_M$IMC ~ data_PPGEE_full_M$Year,
-       alternative = "two.sided",
-       mu = 0,
-       conf.level = 0.95)
