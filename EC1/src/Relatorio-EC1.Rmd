@@ -11,23 +11,22 @@ output:
 ---
 
 ```{r setup, results='hide', warning=FALSE, echo=FALSE, message=FALSE}
-# A few initial definitions just to make sure all required packages are installed. Change as needed.
-# NOTE: It may echo some weird messages to the PDF on the first compile (package installation messages). Run twice and the problem will (hopefully) go away.
+# Pacotes necessários para o relatório
+pacotes <- c("ggplot2", "devtools", "GGally", "car")
 
-# Define the CRAN mirror URL
-cran_mirror <- "[https://cloud.r-project.org](https://cloud.r-project.org)"
+# Checa, instala (se necessário) e carrega os pacotes
+for (pacote in pacotes) {
+  if (!require(pacote, character.only = TRUE, quietly = TRUE)) {
+    install.packages(pacote, repos = "[https://cloud.r-project.org](https://cloud.r-project.org)")
+  }
+  library(pacote, character.only = TRUE)
+}
 
-if (!require(ggplot2, quietly = TRUE)){
-  install.packages("ggplot2", repos = cran_mirror)
-}
-if (!require(devtools, quietly = TRUE)){
-  install.packages("devtools", repos = cran_mirror)
-}
+# O pacote broom é instalado de uma forma diferente (pelo GitHub)
 if (!require(broom, quietly = TRUE)){
-  devtools::install_github("dgrtwo/broom")
-}
-if (!require(GGally, quietly = TRUE)){
-  install.packages("GGally", repos = cran_mirror)
+  # É preciso ter o devtools instalado e carregado antes
+  devtools::install_github("dgrtwo/broom") 
+  library(broom)
 }
 ```
 
@@ -41,8 +40,8 @@ render("report_template.Rmd","pdf_document")    # this renders the pdf
 ```
 
 
-## Introdução
-Esse estudo de caso tem como objetivo comparar o Índice de Massa Corporal (IMC) entre estudantes do Programa de Pós Graduação em Engenharia Elétrica da Universidade Federal de Minas Gerais (PPGEE-UFMG) entre os semestres de 2016/2 e 2017/1. O IMC é uma métrica altamente difundida e usada para indicar se ua determinada pessoa está na faixa de peso ideal. O seu cálculo é feito a partir da equação abaixo.
+## 1. Introdução
+O presente estudo de caso objetiva comparar o Índice de Massa Corporal (IMC), utilizado como um valor _proxy_ para quantificar indicadores de estilo de vida, entre estudantes do Programa de Pós Graduação em Engenharia Elétrica da Universidade Federal de Minas Gerais (PPGEE-UFMG) entre os semestres de 2016/2 e 2017/1. O IMC é uma métrica altamente difundida e usada para indicar se ua determinada pessoa está na faixa de peso ideal. O seu cálculo é feito a partir da equação abaixo.
 
 $$
 IMC = \frac{h}{w^2} \text{, sendo }
@@ -51,8 +50,16 @@ h= \text{altura [cm]} \\
 w= \text{peso [kg]}
 \end{cases}
 $$
+De acordo com a World Health Organization (WHO), a faixa de IMC ideal para adultos situa-se entre 18.5 e 24.9 Kg/m², com valores abaixo de 18.5 Kg/m² indicando subnutrição, valores entre 24.9 e 29.9 Kg/m² indicando sobrepeso e valores acima de 30 Kg/m² indicando obesidade.
+ 
+Desta forma, espera-se que a qualidade de vida dos alunos seja similar entre os dois semestres e que esta semelhança seja observada na equivalência estatística entre a média dos IMCs dos dois semestres.
 
-### 1. Seleção e modificação dos dados
+## 2. Metodologia
+
+### 2.1. Seleção e modificação dos dados
+Os dados disponíveis foram carregados das bases imc_20162.csv e S01_20172.csv fornecidas, contendo informações acerca do gênero, peso em kilogramas e altura em metros dos estudantes dos semestres 2016.2 e 2017.1 respectivamente. A base do semestre 2016.2 contém dados tanto dos alunos de mestrado quanto dos alunos da graduação, portanto há uma coluna adicional diferenciando os mestrandos dos graduandos. Já na base referente ao semestre 2017.1, uma coluna adicional com a idade dos mestrandos também está presente.
+
+Como o estudo de caso se propõe a analizar apenas os estudantes do PPGEE, os dados da base do semestre 2016.2 foram filtrados de acordo com a coluna que diferencia o curso dos alunos. Além disso, os dados obtidos das duas bases de dados foram separados de acordo com o sexo dos participantes e unidos em dois conjuntos de dados em dois conjuntos de dados, um para todos os participantes do sexo feminino e outro para todos os participantes do sexo masculino, diferenciando entre os semestres por meio da adição de uma nova coluna que indica se o individuo cursou a disciplina no semestre 2016.2 ou 2017.1.
 
 ```{r, echo=TRUE}
 # Loading data
@@ -90,13 +97,8 @@ data_PPGEE_full_M <- data.frame(Year = c(data_PPGEE_2016_M$Year, data_PPGEE_2017
                            IMC = c(data_PPGEE_2016_M$IMC, data_PPGEE_2017_M$IMC))
 ```
 
-## Metodologia
 
-### 1. Separação entre sexos
-
-A faixa de peso ideal usada de base para o cálculo do IMC é diferente para homens e mulheres, devido a questões fisiológicas. Assim sendo, julgou-se pertinente analisar separadamente cada um dos sexos, verificando se os IMCs de cada sexo foram diferentes entre os semestres analisados.
-
-### 2. Hipóteses levantadas e escolha do teste
+### 2.2. Hipóteses levantadas
 
 Para ambos os casos, sexo feminino e masculino, a hipótese nula representa a igualdade entre as médias dos IMCs nos dois períodos enquanto a hipótese alternativa defende que as médias são diferentes entre os semestres, ou seja, para o caso feminino, têm-se:
 
@@ -114,11 +116,15 @@ H_1: \mu_{M_{2016}} \neq \mu_{M_{2017}}
 \end{cases}
 $$
 
-Para a escolha dos teste, foi necessário avalar a normalidade e a homocedasticidade dos dados, e para tal foram usados os testes de _Shapiro-Wilk_ e _Fligner-Killen_, respectivamente.
+### 2.3. Testes realizados
 
+Com o objetivo de estudar a hipótese nula e confirmar que não se pode rejeitá-la, é necessário realizar um teste estatístico pertinente. Para decidir qual teste estatístico utilizar, se faz necessário comfirmar uma série de suposições acerca dos dados utilizados, cada uma confirmada por um teste estatístico especifico.
 
+Num primeiro momento, é necessário confirmar a normalidade da distribuição dos dados, que no presente estudo é averiguada por meio do teste de ___Shapiro-Wilk___. Num segundo momento, é necessário analisar se as varIâncias entre os grupos de dados são iguais que neste estudo ocorre por meio da aplicação do teste de ___Fligner-Killen___. Após isto, é interessante confirmar a independência entre os dados dos conjuntos utilizados para garantir que os resultados obtidos não possam ser explicados por meio de correlação interna dos dados, verificação esta que ocorre por meio da aplicação do teste de ___Durbin-Watson___.
 
+Como foi observado que os dados utilizados são normalmente distribuidos, as variâncias são iguais e que os conjuntos apresentam grau satisfatório de independência, o teste estatístico aplicado para averiguar a hipótese nula foi o __teste T__. Por fim, para garantir que os resultados obtidos sejam relevantes, convém também averiguar o tamanho do efeito, avaliado pelo cálculo do poder do __teste t__ realizado, considerando um delta de 1 desvio padrão.
 
+## 3. Resultados
 
 
 <!-- ## Experimental design -->

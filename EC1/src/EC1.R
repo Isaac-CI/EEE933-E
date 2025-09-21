@@ -52,25 +52,24 @@ data_PPGEE_full_M <- data.frame(Year = c(data_PPGEE_2016_M$Year, data_PPGEE_2017
                            IMC = c(data_PPGEE_2016_M$IMC, data_PPGEE_2017_M$IMC))
 
 ########################
-####
-# A princípio não se sabe se as variâncias são iguais, logo realiza-se o teste t de Welch.
-# Por já termos os dados talvez possamos inverter a ordem, fazer as verificações de normalidade,
-# homocedasticidade e independência e escolher o melhor método previamente.
-####
 
-# welch t-test - two_sample - women
+# Verificação de normalidade
 
-t.test(data_PPGEE_full_F$IMC ~ data_PPGEE_full_F$Year,
-       alternative = "two.sided",
-       mu = 0,
-       conf.level = 0.95)
+qqPlot(data_PPGEE_full_F$IMC, groups = data_PPGEE_full_F$Year,
+       cex = 1.5, pch = 16, las = 1, layout = c(2,1))
 
-# welch t-test - two_sample - men
+# Resultado Shapiro feminino 2016
+shapiro.test(data_PPGEE_full_F$IMC[data_PPGEE_full_F$Year == 2016])
+# Resultado Shapiro feminino 2017
+shapiro.test(data_PPGEE_full_F$IMC[data_PPGEE_full_F$Year == 2017])
 
-t.test(data_PPGEE_full_M$IMC ~ data_PPGEE_full_M$Year,
-       alternative = "two.sided",
-       mu = 0,
-       conf.level = 0.95)
+qqPlot(data_PPGEE_full_M$IMC, groups = data_PPGEE_full_M$Year,
+       cex = 1.5, pch = 16, las = 1, layout = c(2,1))
+
+# Resultado Shapiro masculino 2016
+shapiro.test(data_PPGEE_full_M$IMC[data_PPGEE_full_M$Year == 2016])
+# Resultado Shapiro masculino 2017
+shapiro.test(data_PPGEE_full_M$IMC[data_PPGEE_full_M$Year == 2017])
 
 ####
 # Verifica-se se as variâncias são iguais e realiza-se o teste t caso positivo.
@@ -104,13 +103,23 @@ stripchart(x=resid_M,
 # Os testes apontam que as variâncias podem ser consideradas iguais
 ###
 
+
+########################
+# Verificação de independência
+
+dw_model_F <- lm(IMC ~ Year, data=data_PPGEE_full_F)
+durbinWatsonTest(dw_model_F)
+
+dw_model_M <- lm(IMC ~ Year, data=data_PPGEE_full_M)
+durbinWatsonTest(dw_model_M)
+
 # t-test - two_sample - women
 
 res_ttest_f <- t.test(data_PPGEE_full_F$IMC ~ data_PPGEE_full_F$Year,
-       alternative = "two.sided",
-       mu = 0,
-       var.equal = TRUE,
-       conf.level = 0.95)
+                      alternative = "two.sided",
+                      mu = 0,
+                      var.equal = TRUE,
+                      conf.level = 0.95)
 
 ################## Resultado t-Test feminino ####################
 print(res_ttest_f)
@@ -122,10 +131,10 @@ print(paste("Tamanho do efeito: ", round(tam_efeito_f, 4)))
 # t-test - two_sample - men
 
 res_ttest_m <- t.test(data_PPGEE_full_M$IMC ~ data_PPGEE_full_M$Year,
-       alternative = "two.sided",
-       mu = 0,
-       var.equal = TRUE,
-       conf.level = 0.95)
+                      alternative = "two.sided",
+                      mu = 0,
+                      var.equal = TRUE,
+                      conf.level = 0.95)
 
 ################## Resultado t-Test masculino ####################
 print(res_ttest_m)
@@ -135,32 +144,6 @@ tam_efeito_m <- unname(abs(res_ttest_m$estimate[2] - res_ttest_m$estimate[1]))
 print(paste("Tamanho do efeito: ", round(tam_efeito_m,4)))
 
 ########################
-# Verificação de normalidade
-
-qqPlot(data_PPGEE_full_F$IMC, groups = data_PPGEE_full_F$Year,
-       cex = 1.5, pch = 16, las = 1, layout = c(2,1))
-
-# Resultado Shapiro feminino 2016
-shapiro.test(data_PPGEE_full_F$IMC[data_PPGEE_full_F$Year == 2016])
-# Resultado Shapiro feminino 2017
-shapiro.test(data_PPGEE_full_F$IMC[data_PPGEE_full_F$Year == 2017])
-
-qqPlot(data_PPGEE_full_M$IMC, groups = data_PPGEE_full_M$Year,
-       cex = 1.5, pch = 16, las = 1, layout = c(2,1))
-
-# Resultado Shapiro masculino 2016
-shapiro.test(data_PPGEE_full_M$IMC[data_PPGEE_full_M$Year == 2016])
-# Resultado Shapiro masculino 2017
-shapiro.test(data_PPGEE_full_M$IMC[data_PPGEE_full_M$Year == 2017])
-
-########################
-# Verificação de independência
-
-dw_model_F <- lm(IMC ~ Year, data=data_PPGEE_full_F)
-durbinWatsonTest(dw_model_F)
-
-dw_model_M <- lm(IMC ~ Year, data=data_PPGEE_full_M)
-durbinWatsonTest(dw_model_M)
 
 
 ########################
@@ -170,7 +153,7 @@ durbinWatsonTest(dw_model_M)
 agg_sd_F <- sd_pooled(data_PPGEE_2016_F$IMC, data_PPGEE_2017_F$IMC)
 
 power_f <- power.t.test(n=nrow(data_PPGEE_full_F), delta=sd(data_PPGEE_full_F$IMC), sd=sd(data_PPGEE_full_F$IMC),
-             sig.level=0.05, type="two.sample", alternative = "two.sided")$power
+                        sig.level=0.05, type="two.sample", alternative = "two.sided")$power
 
 print(paste("Poder teste feminino: ", round(power_f,4)))
 
@@ -179,6 +162,26 @@ agg_sd_M <- sd_pooled(data_PPGEE_2016_M$IMC, data_PPGEE_2017_M$IMC)
 
 # Masculino
 power_m <- power.t.test(n=nrow(data_PPGEE_full_M), delta=sd(data_PPGEE_full_M$IMC), sd=sd(data_PPGEE_full_M$IMC),
-             sig.level=0.05, type="two.sample", alternative = "two.sided")$power
+                        sig.level=0.05, type="two.sample", alternative = "two.sided")$power
 
 print(paste("Poder teste masculino: ", round(power_m,4)))
+
+####
+# A princípio não se sabe se as variâncias são iguais, logo realiza-se o teste t de Welch.
+# Por já termos os dados talvez possamos inverter a ordem, fazer as verificações de normalidade,
+# homocedasticidade e independência e escolher o melhor método previamente.
+####
+
+# welch t-test - two_sample - women
+
+t.test(data_PPGEE_full_F$IMC ~ data_PPGEE_full_F$Year,
+       alternative = "two.sided",
+       mu = 0,
+       conf.level = 0.95)
+
+# welch t-test - two_sample - men
+
+t.test(data_PPGEE_full_M$IMC ~ data_PPGEE_full_M$Year,
+       alternative = "two.sided",
+       mu = 0,
+       conf.level = 0.95)
