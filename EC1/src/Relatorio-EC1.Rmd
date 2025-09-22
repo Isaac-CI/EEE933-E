@@ -41,16 +41,16 @@ render("report_template.Rmd","pdf_document")    # this renders the pdf
 
 
 ## 1. Introdução
-O presente estudo de caso objetiva comparar o Índice de Massa Corporal (IMC), utilizado como um valor _proxy_ para quantificar indicadores de estilo de vida, entre estudantes do Programa de Pós Graduação em Engenharia Elétrica da Universidade Federal de Minas Gerais (PPGEE-UFMG) entre os semestres de 2016/2 e 2017/1. O IMC é uma métrica altamente difundida e usada para indicar se ua determinada pessoa está na faixa de peso ideal. O seu cálculo é feito a partir da equação abaixo.
+O presente estudo de caso objetiva comparar o Índice de Massa Corporal (IMC), utilizado como um valor _proxy_ para quantificar indicadores de estilo de vida, entre estudantes do Programa de Pós Graduação em Engenharia Elétrica da Universidade Federal de Minas Gerais (PPGEE-UFMG) entre os semestres de 2016/2 e 2017/1. O IMC é uma métrica altamente difundida e usada para indicar se uma determinada pessoa está na faixa de peso ideal. O seu cálculo é feito a partir da equação abaixo.
 
 $$
-IMC = \frac{h}{w^2} \text{, sendo }
+IMC = \frac{w}{h^2} \text{, sendo }
 \begin{cases}
-h= \text{altura [cm]} \\
+h= \text{altura [m]} \\
 w= \text{peso [kg]}
 \end{cases}
 $$
-De acordo com a World Health Organization (WHO), a faixa de IMC ideal para adultos situa-se entre 18.5 e 24.9 Kg/m², com valores abaixo de 18.5 Kg/m² indicando subnutrição, valores entre 24.9 e 29.9 Kg/m² indicando sobrepeso e valores acima de 30 Kg/m² indicando obesidade.
+De acordo com a _World Health Organization (WHO)_, a faixa de IMC considerada ideal para adultos (pessoas com mais de dezoito anos) situa-se entre 18.5 e 24.9 kg/m². Valores abaixo de 18.5 kg/m² indicam subnutrição, enquanto valores entre 25 e 29.9 kg/m² indicam sobrepeso, e valores iguais ou superiores a 30 kg/m² indicam obesidade.
  
 Desta forma, espera-se que a qualidade de vida dos alunos seja similar entre os dois semestres e que esta semelhança seja observada na equivalência estatística entre a média dos IMCs dos dois semestres.
 
@@ -59,9 +59,9 @@ Os códigos implementados para realização do presente estudo de caso estão di
 ## 2. Metodologia
 
 ### 2.1. Seleção e modificação dos dados
-Os dados disponíveis foram carregados das bases imc_20162.csv e S01_20172.csv fornecidas, contendo informações acerca do gênero, peso em kilogramas e altura em metros dos estudantes dos semestres 2016.2 e 2017.1 respectivamente. A base do semestre 2016.2 contém dados tanto dos alunos de mestrado quanto dos alunos da graduação, portanto há uma coluna adicional diferenciando os mestrandos dos graduandos. Já na base referente ao semestre 2017.1, uma coluna adicional com a idade dos mestrandos também está presente.
+Os dados disponíveis foram carregados das bases imc_20162.csv e S01_20172.csv fornecidas, contendo informações acerca do gênero, peso em kilogramas e altura em metros dos estudantes dos semestres 2016.2 e 2017.1 respectivamente. A base do semestre 2016.2 inclui dados tanto dos alunos de pós-graduação quanto dos alunos da graduação, portanto há uma coluna adicional diferenciando os níveis de ensino. Já na base referente ao semestre 2017.1, uma coluna adicional com a idade dos alunos também está presente.
 
-Como o estudo de caso se propõe a analizar apenas os estudantes do PPGEE, os dados da base do semestre 2016.2 foram filtrados de acordo com a coluna que diferencia o curso dos alunos. Além disso, os dados obtidos das duas bases de dados foram separados de acordo com o sexo dos participantes e unidos em dois conjuntos de dados em dois conjuntos de dados, um para todos os participantes do sexo feminino e outro para todos os participantes do sexo masculino, diferenciando entre os semestres por meio da adição de uma nova coluna que indica se o individuo cursou a disciplina no semestre 2016.2 ou 2017.1.
+Como o estudo de caso se propõe a analizar apenas os estudantes do PPGEE, os dados da base do semestre 2016.2 foram filtrados de acordo com a coluna que diferencia o curso dos alunos. Além disso, os dados obtidos das duas bases de dados foram separados de acordo com o sexo dos participantes e unidos em dois conjuntos de dados, um para todos os participantes do sexo feminino e outro para todos os participantes do sexo masculino. Cada conjunto diferencia os alunos em relação ao semestre por meio da adição de uma nova coluna que indica se o individuo cursou a disciplina no semestre 2016.2 ou 2017.1.
 
 ```{r, echo=TRUE}
 # Loading data
@@ -102,7 +102,7 @@ data_PPGEE_full_M <- data.frame(Year = c(data_PPGEE_2016_M$Year, data_PPGEE_2017
 
 ### 2.2. Hipóteses levantadas
 
-Para ambos os casos, sexo feminino e masculino, a hipótese nula representa a igualdade entre as médias dos IMCs nos dois períodos enquanto a hipótese alternativa defende que as médias são diferentes entre os semestres, ou seja, para o caso feminino, têm-se:
+Tanto para o caso do sexo feminino quanto para o caso do sexo masculino, a hipótese nula representa a igualdade entre as médias dos IMCs nos dois períodos enquanto a hipótese alternativa defende que as médias são diferentes entre os semestres, ou seja, para o caso feminino, têm-se:
 
 $$
 \begin{cases}
@@ -110,7 +110,7 @@ H_0: \mu_{F_{2016}}=\mu_{F_{2017}} \\
 H_1: \mu_{F_{2016}} \neq \mu_{F_{2017}}
 \end{cases}
 $$
-já para o masculino, a representação matemática é:
+e para o masculino, a representação matemática é:
 $$
 \begin{cases}
 H_0: \mu_{M_{2016}}=\mu_{M_{2017}} \\
@@ -120,11 +120,11 @@ $$
 
 ### 2.3. Testes realizados
 
-Com o objetivo de estudar a hipótese nula e confirmar que não se pode rejeitá-la, é necessário realizar um teste estatístico pertinente. Para decidir qual teste estatístico utilizar, se faz necessário comfirmar uma série de suposições acerca dos dados utilizados, cada uma confirmada por um teste estatístico especifico.
+Com o objetivo de avaliar a hipótese nula e verificar se há evidências para rejeitá-la ou não, é necessário a realização de um teste de hipóteses pertinente. A escolha do teste a ser utilizado depende da verificação das premissas acerca dos dados, cada uma avaliada por um teste estatístico especifico.
 
-Num primeiro momento, é necessário confirmar a normalidade da distribuição dos dados, que no presente estudo é averiguada por meio do teste de ___Shapiro-Wilk___. Num segundo momento, é necessário analisar se as varIâncias entre os grupos de dados são iguais que neste estudo ocorre por meio da aplicação do teste de ___Fligner-Killen___. Após isto, é interessante confirmar a independência entre os dados dos conjuntos utilizados para garantir que os resultados obtidos não possam ser explicados por meio de correlação interna dos dados, verificação esta que ocorre por meio da aplicação do teste de ___Durbin-Watson___.
+Inicialmente, foi necessário confirmar a premissa de normalidade da distribuição dos dados, que no presente estudo foi averiguada por meio do teste de ___Shapiro-Wilk___. Em seguida, por meio da aplicação do teste de ___Fligner-Killen___, foi analisado se as variâncias entre os grupos de dados são homogêneas. Após isto, foi avaliada a independência entre os dados dos conjuntos, a fim de garantir que os resultados obtidos não fossem influenciados por correlação interna dos dados, o que foi verificado por meio da aplicação do teste de ___Durbin-Watson___. Com a aplicação dos testes, foi observado que os dados são normalmente distribuidos, as variâncias são homogêneas e que os conjuntos apresentam grau satisfatório de independência. 
 
-Como foi observado que os dados utilizados são normalmente distribuidos, as variâncias são iguais e que os conjuntos apresentam grau satisfatório de independência, o teste estatístico aplicado para averiguar a hipótese nula foi o __teste T__. Por fim, para garantir que os resultados obtidos sejam relevantes, convém também averiguar o tamanho do efeito, avaliado pelo cálculo do poder do __teste t__ realizado, considerando um delta de 1 desvio padrão.
+O teste estatístico aplicado para averiguar a hipótese nula deste estudo de caso foi o __teste t__, uma vez que as média populacionais são desconhecidas. Além disso, durante todo o estudo de caso, foi utilizado um nível de confiança de 95\%, ou seja, foi adotado um \(\alpha = 0.05\). Por fim, para avaliar a relevância prática dos resultados, foi encontrado o tamanho do efeito por meio do cálculo do poder do __teste t__ realizado, considerando um delta equivalente a 1 desvio padrão.
 
 ## 3. Resultados
 ### 3.1 Avaliação da normalidade dos dados
@@ -140,25 +140,53 @@ shapiro.test(data_PPGEE_full_M$IMC[data_PPGEE_full_M$Year == 2016])
 # Resultado Shapiro masculino 2017
 shapiro.test(data_PPGEE_full_M$IMC[data_PPGEE_full_M$Year == 2017])
 
+qqPlot(data_PPGEE_full_F$IMC, groups = data_PPGEE_full_F$Year,
+       cex = 1.5, pch = 16, las = 1, layout = c(2,1))
+qqPlot(data_PPGEE_full_M$IMC, groups = data_PPGEE_full_M$Year,
+       cex = 1.5, pch = 16, las = 1, layout = c(2,1))
+
 ```
 
-Ao utilizar o Teste de Shapiro-Wilk para avaliar a suposição de normalidade dos dados de IMC em cada grupo, foi observado que para a amostra feminina de 2017, a hipótese de normalidade foi rejeitada (W = 0.748, p = 0.037), indicando que os dados não seguem uma distribuição normal, o que pode ser explicado pelo baixo espaço amostral (apenas 4 alunas).
+Ao utilizar o teste de __Shapiro-Wilk__ para avaliar a premissa de normalidade em cada grupo, foi observado que para a amostra feminina de 2017.2, a hipótese de normalidade foi rejeitada (W = 0.748, p = 0.037), pois retornou um p-valor menor que o alfo escolhido. Esse resultado indica que os dados não seguem uma distribuição normal, o que pode ser explicado pelo baixo volume de observações (apenas 4 alunas).
 
-Para os demais grupos (feminino 2016, masculino 2016 e masculino 2017), não foram encontradas evidências estatísticas para rejeitar a hipótese de normalidade (p > 0.05), sustentando a aplicação de testes paramétricos para estas amostras, de modo com que é possível concluir que é seguro seguir com a suposição da distribuição normal dos dados.
+Para os demais grupos (feminino 2016.2, masculino 2016.2 e masculino 2017.2), não foram encontradas evidências estatísticas suficientes para rejeitar a hipótese de normalidade (p > $\alpha$), o que sustenta a aplicação de testes paramétricos para estas amostras. Assim, conclui-se que é adequado assumir a normalidade da distribuição dos dados.
 
 ### 3.2 Avaliação da homocedasticidade dos dados
 ```{r, echo=TRUE}
 ####
-# Verifica-se se as variâncias são iguais.
+# Verifica-se se as variâncias homogêneas.
 ####
 
+# Feminino
 fligner.test(IMC ~ Year, data = data_PPGEE_full_F)
 
+resid_F <- tapply(X = data_PPGEE_full_F$IMC, INDEX = data_PPGEE_full_F$Year,
+                  FUN = function(x){x-mean(x)})
+stripchart(x=resid_F,
+           vertical = TRUE,
+           pch = 16,
+           cex = 1.5,
+           las = 1,
+           xlab = 'mean',
+           ylab = 'residuals')
+
+# Masculino
 fligner.test(IMC ~ Year, data = data_PPGEE_full_M)
+
+resid_M <- tapply(X = data_PPGEE_full_M$IMC, INDEX = data_PPGEE_full_M$Year,
+                  FUN = function(x){x-mean(x)})
+stripchart(x=resid_M,
+           vertical = TRUE,
+           pch = 16,
+           cex = 1.5,
+           las = 1,
+           xlab = 'mean',
+           ylab = 'residuals')
+
 
 ```
 
-A homogeneidade das variâncias do IMC entre os semestres de 2016 e 2017 foi avaliada pelo Teste de Fligner-Killeen. Para ambos os sexos, feminino (χ²(1) = 0.711, p = 0.399) e masculino (χ²(1) = 0.083, p = 0.774), não foi possível rejeitar a hipótese nula de igualdade de variâncias. Desta forma, a premissa de homocedasticidade foi satisfeita, permitindo o uso da versão padrão do teste t.
+A homogeneidade das variâncias entre os semestres 2016.2 e 2017.2 foi avaliada pelo teste de __Fligner-Killeen__. Para ambos os sexos, feminino ($\chi$²(1) = 0.711, p = 0.399) e masculino ($\chi$²(1) = 0.083, p = 0.774), não foram encontradas evidências suficientes para rejeitar a hipótese nula de homogeneidade das variâncias (p-valor > $\alpha$). Desta forma, a premissa de homocedasticidade foi atendida, permitindo a aplicação da versão padrão do teste t.
 
 
 ### 3.3 Avaliação da independência dos resíduos
@@ -173,7 +201,7 @@ dw_model_M <- lm(IMC ~ Year, data=data_PPGEE_full_M)
 durbinWatsonTest(dw_model_M)
 ```
 
-A independência das observações foi verificada por meio do Teste de Durbin-Watson aplicado aos resíduos de um modelo linear. Os resultados para o grupo feminino (p = 0.508) e masculino (p = 0.700) não indicaram a presença de autocorrelação, sustentando a suposição de que as medições de IMC são independentes entre si.
+A independência das observações foi verificada por meio do teste de __Durbin-Watson__ aplicado aos resíduos de um modelo linear. Os resultados para o grupo feminino (p = 0.508) e masculino (p = 0.700) não indicaram evidências de autocorrelação, sustentando a suposição de independência entre as medições de IMC.
 
 ### 3.4 Teste T para a hipótese levantada
 
@@ -195,9 +223,9 @@ res_ttest_m <- t.test(data_PPGEE_full_M$IMC ~ data_PPGEE_full_M$Year,
 print(res_ttest_m)
 ```
 
-Para comparar o IMC médio entre os semestres, foi realizado um Teste t para amostras independentes. No grupo feminino, não foi encontrada diferença estatisticamente significativa entre a média de 2016 (M = 21.08) e 2017 (M = 18.45), com t(9) = 1.93, p = 0.086. Da mesma forma, para o grupo masculino, a diferença entre as médias de 2016 (M = 24.94) e 2017 (M = 24.29) também não foi significativa, t(40) = 0.54, p = 0.592. Portanto, o estudo não encontrou evidências de que o IMC médio dos alunos tenha se alterado entre os períodos analisados, corroborando com a hipótese nula de que os estilos de vida dos alunos do PPGEE nos semestres 2016.2 e 2017.1 são estatisticacmente equivalentes.
+Para comparar o IMC médio entre os semestres, foi realizado um teste t para amostras independentes. No grupo feminino, não foi encontrada diferença estatisticamente significativa entre a média de 2016 (M = 21.08) e 2017 (M = 18.45), com t(9) = 1.93, p = 0.086. Da mesma forma, para o grupo masculino, a diferença entre as médias de 2016 (M = 24.94) e 2017 (M = 24.29) também não foi significativa, t(40) = 0.54, p = 0.592. Portanto, o estudo não encontrou evidências de que o IMC médio dos alunos tenha se alterado entre os períodos analisados, corroborando com a hipótese nula de que os estilos de vida dos alunos do PPGEE nos semestres 2016.2 e 2017.1 são estatisticacmente equivalentes.
 
-### 3.5 Tamanho do efeito e intervalo de confiânça
+### 3.5 Tamanho do efeito e intervalo de confiança
 
 ```{r, echo=TRUE}
 ########################
@@ -206,7 +234,8 @@ Para comparar o IMC médio entre os semestres, foi realizado um Teste t para amo
 # Calculando o desvio padrão agregado e o poder do teste feminino
 agg_sd_F <- sd_pooled(data_PPGEE_2016_F$IMC, data_PPGEE_2017_F$IMC)
 
-power_f <- power.t.test(n=nrow(data_PPGEE_full_F), delta=sd(data_PPGEE_full_F$IMC), sd=sd(data_PPGEE_full_F$IMC),
+power_f <- power.t.test(n=nrow(data_PPGEE_full_F), delta=sd(data_PPGEE_full_F$IMC),
+                        sd=sd(data_PPGEE_full_F$IMC),
                         sig.level=0.05, type="two.sample", alternative = "two.sided")$power
 
 print(paste("Poder teste feminino: ", round(power_f,4)))
@@ -215,7 +244,8 @@ print(paste("Poder teste feminino: ", round(power_f,4)))
 agg_sd_M <- sd_pooled(data_PPGEE_2016_M$IMC, data_PPGEE_2017_M$IMC)
 
 # Masculino
-power_m <- power.t.test(n=nrow(data_PPGEE_full_M), delta=sd(data_PPGEE_full_M$IMC), sd=sd(data_PPGEE_full_M$IMC),
+power_m <- power.t.test(n=nrow(data_PPGEE_full_M), delta=sd(data_PPGEE_full_M$IMC),
+                        sd=sd(data_PPGEE_full_M$IMC),
                         sig.level=0.05, type="two.sample", alternative = "two.sided")$power
 
 print(paste("Poder teste masculino: ", round(power_m,4)))
@@ -225,69 +255,19 @@ A análise de poder estatístico indicou que o teste para o grupo masculino apre
 
 Já a análise dos intervalos de confiança de 95% para a diferença entre as médias de IMC corrobora os resultados dos testes de hipótese. Para o grupo feminino, o intervalo variou de -0.45 a 5.73, enquanto para o masculino, a variação foi de -1.78 a 3.09.
 
-Crucialmente, ambos os intervalos contêm o valor zero, indicando que uma diferença nula entre as médias dos semestres é um resultado plausível. A amplitude dos intervalos, especialmente para o grupo feminino, também sugere um grau considerável de incerteza na estimativa da verdadeira diferença, o que é consistente com o baixo poder estatístico e o tamanho reduzido da amostra.
+É importante destacar que ambos os intervalos de confiança contêm o valor zero, indicando que uma diferença nula entre as médias dos semestres é um resultado plausível. A amplitude dos intervalos, especialmente para o grupo feminino, também sugere um grau considerável de incerteza na estimativa da verdadeira diferença, o que é consistente com o baixo poder estatístico e o tamanho reduzido da amostra.
 
 ## 4. Conclusões
 
-A partir dos resultados obtidos, concluí-se que a hipótese nula não pode ser rejeitada com os testes realizados, principalmente no subconjunto dos indivíduos do sexo masculino, uma vez que apresentam um tamanho do efeito relevante e um intervalo de confiança significativamente mais estreito quando comparado ao subconjunto dos indivíduos do sexo feminino, que não apresentou um tamanho de efeito relevante. 
+A partir dos resultados obtidos, concluí-se que não evidências suficientes para que a hipótese nula seja rejeitada com os testes realizados, principalmente no subconjunto dos indivíduos do sexo masculino, uma vez que apresentam um tamanho do efeito relevante e um intervalo de confiança significativamente mais estreito quando comparado ao subconjunto dos indivíduos do sexo feminino, que não apresentou um tamanho de efeito relevante. 
 
-Esta diferença entre os subconjuntos pode ser explicada por meio do tamanho do espaço amostral, que para o subconjunto feminino é significativamente menor, sendo até mesmo refutada a suposição da normalidade dos dados no subconjunto de alunas do semestre 2017.1, o que pode ter influênciado a confiabilidade do __teste t__ realizado, uma vez que ele depende da suposição da normalidade dos dados e se beneficie de um maior espaço amostral.
+A diferença entre os subconjuntos pode ser explicada por meio do tamanho do espaço amostral, que para o subconjunto feminino é significativamente menor, sendo até mesmo rejeitada a hipótese de normalidade dos dados no subconjunto de alunas do semestre 2017.1. Essa ocorrência pode ter influenciado a confiabilidade do __teste t__ realizado, uma vez que ele depende da premissa de normalidade da distribuição e, quando é possível obter um maior espaço amostral, gera resultados mais próximos ao populacional.
 
-Deste modo, futuras melhoras para o estudo de caso realizado podem partir de duas abordagens. A primeira consiste em adaptar o teste estatístico no subconjunto dos alunos do sexo feminino, de modo com que o teste utilizado não se baseie na suposição da normalidade dos dados, a exemplo do _teste t de welch_.
+Deste modo, futuras melhoras para o estudo de caso realizado podem partir de duas abordagens. A primeira consiste em adaptar o teste estatístico no subconjunto dos alunos do sexo feminino, de modo que o teste utilizado não se baseie na suposição da normalidade dos dados, a exemplo do _Mann-Whitney-Wilcoxon (ou teste U de Mann-Whitney)_.
 
 A segunda abordagem é mais direta e trabalhosa, consistindo em aumentar o espaço amostral ao entrevistar alunos de múltiplas turmas ao invés de apenas turmas da disciplina de projeto e análise de experimentos, o que resolveria o problema do espaço amostral reduzido.
 
 ## Apendice A - Funções dos integrantes
-- Homero: Responsável pelo projeto e implementação do estudo de caso e esboçar o relatório;
-- Isaac: Responsável por redigir o texto completo completando e incrementando o esboço;
-- Stéfani: Responsável por verificar o relatório completo e redigir a versão final.
-
-<!-- ## Experimental design -->
-<!-- A section detailing the experimental setup. This is the place where you will define your test hypotheses, e.g.: -->
-<!-- $$\begin{cases} H_0: \mu = 10&\\H_1: \mu<10\end{cases}$$ -->
-
-<!-- including the reasons behind your choices of the value for $H_0$ and the directionality (or not) of $H_1$.  -->
-
-<!-- This is also the place where you should discuss (whenever necessary) your definitions of minimally relevant effects ($\delta^*$), sample size calculations, choice of power and significance levels, and any other relevant information about specificities in your data collection procedures. -->
-
-<!-- ### Description of the data collection -->
-<!-- Whenever needed, you can also include an (optional) subsection describing the actual data collection, how it was performed, any adaptations or unexpected events that may have occurred, etc. Subsections like this can also be used for the sample size calculations or any other aspect that requires a longer discussion. -->
-
-<!-- ## Exploratory Data Analysis -->
-<!-- The first step is to load and preprocess the data. For instance, -->
-<!-- ```{r loaddata} -->
-<!-- data(mtcars) -->
-<!-- fc<-c(2,8:11) -->
-<!-- for (i in 1:length(fc)){mtcars[,fc[i]]<-as.factor(mtcars[,fc[i]])} -->
-<!-- levels(mtcars$am) <- c("Automatic","Manual") -->
-<!-- ``` -->
-
-<!-- To get an initial feel for the relationships between the relevant variables of your experiment it is frequently interesting to perform some preliminary (exploratory) analysis. This is frequently referred to as _getting a feel_ of your data, and can suggest procedures (such as outlier investigation or data transformations) to experienced experimenters. -->
-
-<!-- ```{r pairs,fig.width=8,echo=TRUE,message=FALSE,fig.cap="Exploring the effect of car transmission on mpg values"} -->
-<!-- library(GGally,quietly = T, warn.conflicts = F) # This is just me getting fancy. -->
-<!--                                                 # There are much simpler ways ;-) -->
-<!-- ggpairs(data=mtcars,columns=c(1,9),title="MPG by transmission type", -->
-<!--         upper=list(combo="box"),lower=list(combo="facethist"), -->
-<!--         diag=list(continuous="densityDiag",discrete="barDiag")) -->
-<!-- ``` -->
-
-<!-- Your preliminary analysis should be described together with the plots. In this example, two facts are immediately clear from the plots: first, **mpg** tends to correlate well with many of the other variables, most intensely with **drat** (positively) and **wt** (negatively). It is also clear that many of the variables are highly correlated (e.g., **wt** and **disp**). Second, it seems like manual transmission models present larger values of **mpg** than the automatic ones. In the next section a linear model will be fit to the data in order to investigate the significance and magnitude of this possible effect. -->
-
-<!-- ## Statistical Analysis -->
-<!-- Your statistical analysis should come here. This is the place where you should fit your statistical model, get the results of your significance test, your effect size estimates and confidence intervals. -->
-
-<!-- ```{r fitmodel,results='hold'} -->
-<!-- model<-aov(mpg~am*disp,data=mtcars) -->
-<!-- summary(model) -->
-<!-- ``` -->
-
-<!-- ### Checking Model Assumptions -->
-<!-- The assumptions of your test should also be validated, and possible effects of violations should also be explored. -->
-<!-- ```{r resplots,fig.width=8,echo=TRUE,message=FALSE, fig.cap = "Residual plots for the anova model"} -->
-<!-- par(mfrow=c(2,2), mai=.3*c(1,1,1,1)) -->
-<!-- plot(model,pch=16,lty=1,lwd=2) -->
-<!-- ``` -->
-
-<!-- ### Conclusions and Recommendations -->
-<!-- The discussion of your results, and the scientific/technical meaning of the effects detected, should be placed here. Always be sure to tie your results back to the original question of interest! -->
+- Homero: Responsável pelo projeto e implementação do estudo de caso, esboçar o relatório e discutir a realização do estudo, bem como seus resultados;
+- Isaac: Responsável por discutir a realização do estudo, bem como seus resultados, redigir o texto completo completando e incrementando o esboço;
+- Stéfani: Responsável por discutir a realização do estudo, bem como seus resultados, revisar e complementar o relatório e redigir a versão final.
