@@ -59,9 +59,9 @@ Os códigos implementados para realização do presente estudo de caso estão di
 ## 2. Metodologia
 
 ### 2.1. Seleção e modificação dos dados
-Os dados disponíveis foram carregados das bases imc_20162.csv e S01_20172.csv fornecidas, contendo informações acerca do gênero, peso em kilogramas e altura em metros dos estudantes dos semestres 2016.2 e 2017.1 respectivamente. A base do semestre 2016.2 inclui dados tanto dos alunos de pós-graduação quanto dos alunos da graduação, portanto há uma coluna adicional diferenciando os níveis de ensino. Já na base referente ao semestre 2017.1, uma coluna adicional com a idade dos alunos também está presente.
+Os dados disponíveis foram carregados das bases imc_20162.csv e S01_20172.csv fornecidas, contendo informações acerca do gênero, peso em quilogramas e altura em metros dos estudantes dos semestres 2016.2 e 2017.1 respectivamente. A base do semestre 2016.2 inclui dados tanto dos alunos de pós-graduação quanto dos alunos da graduação, portanto há uma coluna adicional diferenciando os níveis de ensino. Já na base referente ao semestre 2017.1, uma coluna adicional com a idade dos alunos também está presente.
 
-Como o estudo de caso se propõe a analizar apenas os estudantes do PPGEE, os dados da base do semestre 2016.2 foram filtrados de acordo com a coluna que diferencia o curso dos alunos. Além disso, os dados obtidos das duas bases de dados foram separados de acordo com o sexo dos participantes e unidos em dois conjuntos de dados, um para todos os participantes do sexo feminino e outro para todos os participantes do sexo masculino. Cada conjunto diferencia os alunos em relação ao semestre por meio da adição de uma nova coluna que indica se o individuo cursou a disciplina no semestre 2016.2 ou 2017.1.
+Como o estudo de caso se propõe a analisar apenas os estudantes do PPGEE, os dados da base do semestre 2016.2 foram filtrados de acordo com a coluna que diferencia o curso dos alunos. Além disso, os dados obtidos das duas bases de dados foram separados de acordo com o sexo dos participantes e unidos em dois conjuntos de dados, um para todos os participantes do sexo feminino e outro para todos os participantes do sexo masculino. Cada conjunto diferencia os alunos em relação ao semestre por meio da adição de uma nova coluna que indica se o individuo cursou a disciplina no semestre 2016.2 ou 2017.1.
 
 ```{r, echo=TRUE}
 # Loading data
@@ -102,7 +102,7 @@ data_PPGEE_full_M <- data.frame(Year = c(data_PPGEE_2016_M$Year, data_PPGEE_2017
 
 ### 2.2. Hipóteses levantadas
 
-Tanto para o caso do sexo feminino quanto para o caso do sexo masculino, a hipótese nula representa a igualdade entre as médias dos IMCs nos dois períodos enquanto a hipótese alternativa defende que as médias são diferentes entre os semestres, ou seja, para o caso feminino, têm-se:
+Tanto para o caso do sexo feminino quanto para o caso do sexo masculino, a hipótese nula representa a igualdade entre as médias dos IMCs nos dois períodos enquanto a hipótese alternativa defende que as médias diferem entre os semestres, ou seja, para o caso feminino, têm-se:
 
 $$
 \begin{cases}
@@ -120,11 +120,11 @@ $$
 
 ### 2.3. Testes realizados
 
-Com o objetivo de avaliar a hipótese nula e verificar se há evidências para rejeitá-la ou não, é necessário a realização de um teste de hipóteses pertinente. A escolha do teste a ser utilizado depende da verificação das premissas acerca dos dados, cada uma avaliada por um teste estatístico especifico.
+Com o objetivo de avaliar a hipótese nula e verificar se há evidências para rejeitá-la ou não, é necessário a realização de um teste de hipóteses pertinente. A escolha do teste a ser utilizado depende da verificação das premissas acerca dos dados, cada uma avaliada por um teste estatístico específico.
 
-Inicialmente, foi necessário confirmar a premissa de normalidade da distribuição dos dados, que no presente estudo foi averiguada por meio do teste de ___Shapiro-Wilk___. Em seguida, por meio da aplicação do teste de ___Fligner-Killen___, foi analisado se as variâncias entre os grupos de dados são homogêneas. Após isto, foi avaliada a independência entre os dados dos conjuntos, a fim de garantir que os resultados obtidos não fossem influenciados por correlação interna dos dados, o que foi verificado por meio da aplicação do teste de ___Durbin-Watson___. Com a aplicação dos testes, foi observado que os dados são normalmente distribuidos, as variâncias são homogêneas e que os conjuntos apresentam grau satisfatório de independência. 
+Inicialmente, foi necessário confirmar a premissa de normalidade da distribuição dos dados, que no presente estudo foi averiguada por meio do teste de ___Shapiro-Wilk___. Em seguida, por meio da aplicação do teste de ___Fligner-Killen___, foi analisado se as variâncias entre os grupos de dados são homogêneas. Após isto, foi avaliada a independência entre os dados dos conjuntos, a fim de garantir que os resultados obtidos não fossem influenciados por correlação interna dos dados, o que foi verificado por meio da aplicação do teste de ___Durbin-Watson___. Com a aplicação dos testes, foi observado que os dados são normalmente distribuídos, as variâncias são homogêneas e que os conjuntos apresentam grau satisfatório de independência. 
 
-O teste estatístico aplicado para averiguar a hipótese nula deste estudo de caso foi o __teste t__, uma vez que as média populacionais são desconhecidas. Além disso, durante todo o estudo de caso, foi utilizado um nível de confiança de 95\%, ou seja, foi adotado um \(\alpha = 0.05\). Por fim, para avaliar a relevância prática dos resultados, foi encontrado o tamanho do efeito por meio do cálculo do poder do __teste t__ realizado, considerando um delta equivalente a 1 desvio padrão.
+O teste estatístico aplicado para averiguar a hipótese nula deste estudo de caso foi o __teste t__, uma vez que as médias populacionais são desconhecidas. Além disso, durante todo o estudo de caso, foi utilizado um nível de confiança de 95\%, ou seja, foi adotado um \(\alpha = 0.05\). Por fim, para avaliar a relevância prática dos resultados, foi encontrado o tamanho do efeito por meio do cálculo do poder do __teste t__ realizado, considerando um delta equivalente a 1 desvio padrão.
 
 ## 3. Resultados
 ### 3.1 Avaliação da normalidade dos dados
@@ -147,11 +147,11 @@ qqPlot(data_PPGEE_full_M$IMC, groups = data_PPGEE_full_M$Year,
 
 ```
 
-Ao utilizar o teste de __Shapiro-Wilk__ para avaliar a premissa de normalidade em cada grupo, foi observado que para a amostra feminina de 2017.2, a hipótese de normalidade foi rejeitada (W = 0.748, p = 0.037), pois retornou um p-valor menor que o alfo escolhido. Esse resultado indica que os dados não seguem uma distribuição normal, o que pode ser explicado pelo baixo volume de observações (apenas 4 alunas).
+Ao utilizar o teste de __Shapiro-Wilk__ para avaliar a premissa de normalidade em cada grupo, foi observado que para a amostra feminina de 2017.2, a hipótese de normalidade foi rejeitada (W = 0.748, p = 0.037), pois retornou um p-valor menor que o alfa escolhido. Esse resultado indica que os dados não seguem uma distribuição normal, o que pode ser explicado pelo baixo volume de observações (apenas 4 alunas).
 
 Para os demais grupos (feminino 2016.2, masculino 2016.2 e masculino 2017.2), não foram encontradas evidências estatísticas suficientes para rejeitar a hipótese de normalidade (p > $\alpha$), o que sustenta a aplicação de testes paramétricos para estas amostras. Assim, conclui-se que é adequado assumir a normalidade da distribuição dos dados.
 
-### 3.2 Avaliação da homocedasticidade dos dados
+### 3.2 Avaliação da homoscedasticidade dos dados
 ```{r, echo=TRUE}
 ####
 # Verifica-se se as variâncias homogêneas.
@@ -186,7 +186,7 @@ stripchart(x=resid_M,
 
 ```
 
-A homogeneidade das variâncias entre os semestres 2016.2 e 2017.2 foi avaliada pelo teste de __Fligner-Killeen__. Para ambos os sexos, feminino ($\chi$²(1) = 0.711, p = 0.399) e masculino ($\chi$²(1) = 0.083, p = 0.774), não foram encontradas evidências suficientes para rejeitar a hipótese nula de homogeneidade das variâncias (p-valor > $\alpha$). Desta forma, a premissa de homocedasticidade foi atendida, permitindo a aplicação da versão padrão do teste t.
+A homogeneidade das variâncias entre os semestres 2016.2 e 2017.2 foi avaliada pelo teste de __Fligner-Killeen__. Para ambos os sexos, feminino ($\chi$²(1) = 0.711, p = 0.399) e masculino ($\chi$²(1) = 0.083, p = 0.774), não foram encontradas evidências suficientes para rejeitar a hipótese nula de homogeneidade das variâncias (p-valor > $\alpha$). Desta forma, a premissa de homoscedasticidade foi atendida, permitindo a aplicação da versão padrão do teste t.
 
 
 ### 3.3 Avaliação da independência dos resíduos
@@ -223,7 +223,7 @@ res_ttest_m <- t.test(data_PPGEE_full_M$IMC ~ data_PPGEE_full_M$Year,
 print(res_ttest_m)
 ```
 
-Para comparar o IMC médio entre os semestres, foi realizado um teste t para amostras independentes. No grupo feminino, não foi encontrada diferença estatisticamente significativa entre a média de 2016 (M = 21.08) e 2017 (M = 18.45), com t(9) = 1.93, p = 0.086. Da mesma forma, para o grupo masculino, a diferença entre as médias de 2016 (M = 24.94) e 2017 (M = 24.29) também não foi significativa, t(40) = 0.54, p = 0.592. Portanto, o estudo não encontrou evidências de que o IMC médio dos alunos tenha se alterado entre os períodos analisados, corroborando com a hipótese nula de que os estilos de vida dos alunos do PPGEE nos semestres 2016.2 e 2017.1 são estatisticacmente equivalentes.
+Para comparar o IMC médio entre os semestres, foi realizado um teste t para amostras independentes. No grupo feminino, não foi encontrada diferença estatisticamente significativa entre a média de 2016 (M = 21.08) e 2017 (M = 18.45), com t(9) = 1.93, p = 0.086. Da mesma forma, para o grupo masculino, a diferença entre as médias de 2016 (M = 24.94) e 2017 (M = 24.29) também não foi significativa, t(40) = 0.54, p = 0.592. Portanto, o estudo não encontrou evidências de que o IMC médio dos alunos tenha se alterado entre os períodos analisados, corroborando com a hipótese nula de que os estilos de vida dos alunos do PPGEE nos semestres 2016.2 e 2017.1 são estatisticamente equivalentes.
 
 ### 3.5 Tamanho do efeito e intervalo de confiança
 
@@ -259,7 +259,7 @@ Já a análise dos intervalos de confiança de 95% para a diferença entre as m�
 
 ## 4. Conclusões
 
-A partir dos resultados obtidos, concluí-se que não evidências suficientes para que a hipótese nula seja rejeitada com os testes realizados, principalmente no subconjunto dos indivíduos do sexo masculino, uma vez que apresentam um tamanho do efeito relevante e um intervalo de confiança significativamente mais estreito quando comparado ao subconjunto dos indivíduos do sexo feminino, que não apresentou um tamanho de efeito relevante. 
+A partir dos resultados obtidos, conclui-se que não evidências suficientes para que a hipótese nula seja rejeitada com os testes realizados, principalmente no subconjunto dos indivíduos do sexo masculino, uma vez que apresentam um tamanho do efeito relevante e um intervalo de confiança significativamente mais estreito quando comparado ao subconjunto dos indivíduos do sexo feminino, que não apresentou um tamanho de efeito relevante. 
 
 A diferença entre os subconjuntos pode ser explicada por meio do tamanho do espaço amostral, que para o subconjunto feminino é significativamente menor, sendo até mesmo rejeitada a hipótese de normalidade dos dados no subconjunto de alunas do semestre 2017.1. Essa ocorrência pode ter influenciado a confiabilidade do __teste t__ realizado, uma vez que ele depende da premissa de normalidade da distribuição e, quando é possível obter um maior espaço amostral, gera resultados mais próximos ao populacional.
 
