@@ -1,0 +1,307 @@
+---
+title: 'Estudo de Caso 02: Análise da rentabilidade de ações'
+author: "Homero Castro, Isaac Marinho e Stéfani Verissimo"
+date: "12 de outubro de 2025"
+output:
+  pdf_document:
+    latex_engine: xelatex
+    fig_caption: yes
+  html_document:
+    df_print: paged
+---
+
+```{r setup, results='hide', warning=FALSE, echo=FALSE, message=FALSE}
+if (!require("readr")) install.packages("readr", repos="http://cran.r-project.org")
+if (!require("dplyr")) install.packages("dplyr", repos="http://cran.r-project.org")
+if (!require("tidyr")) install.packages("tidyr", repos="http://cran.r-project.org")
+if (!require("car")) install.packages("car", repos="http://cran.r-project.org")
+if (!require("dunn.test")) install.packages("dunn.test", repos="http://cran.r-project.org")
+if (!require("knitr")) install.packages("knitr", repos="http://cran.r-project.org")
+if (!require("multcomp")) install.packages("multcomp", repos="http://cran.r-project.org")
+if (!require("ggplot2")) install.packages("ggplot2")
+if (!require("pwr")) install.packages("pwr")
+
+library(readr)
+library(dplyr)
+library(tidyr)
+library(car)
+library(dunn.test)
+library(knitr)
+library(multcomp)
+library(ggplot2)
+library(pwr)
+
+plot_tukey_CI <- function(tukey_confint_obj,
+                                      comp_significativas = NULL,
+                                      comp_marginais = NULL,
+                                      titulo = NULL) {
+  
+  # --- PASSO 1: Extrair os dados para um data.frame ---
+  df_plot <- data.frame(
+    Comparacao = names(tukey_confint_obj$confint[, "Estimate"]),
+    Estimativa = tukey_confint_obj$confint[, "Estimate"],
+    Limite_Inferior = tukey_confint_obj$confint[, "lwr"],
+    Limite_Superior = tukey_confint_obj$confint[, "upr"]
+  )
+  
+  # --- PASSO 2: Criar a coluna de destaque com base nos parâmetros ---
+  df_plot <- df_plot %>%
+    mutate(
+      Destaque = case_when(
+        Comparacao %in% comp_significativas ~ "Significativo",
+        Comparacao %in% comp_marginais    ~ "Marginalmente Significativo",
+        TRUE                              ~ "Não Significativo"
+      )
+    )
+  
+  # --- PASSO 3: Gerar título dinâmico se nenhum for fornecido ---
+  if (is.null(titulo)) {
+    nivel_confianca <- attr(tukey_confint_obj, "conf.level") * 100
+    titulo_plot <- paste0("Intervalos de Confiança de 95% para Comparações Múltiplas (Tukey)")
+  } else {
+    titulo_plot <- titulo
+  }
+  
+  # --- PASSO 4: Gerar o gráfico ---
+  g <- ggplot(df_plot, aes(x = Estimativa, y = Comparacao, color = Destaque)) +
+    geom_errorbarh(aes(xmin = Limite_Inferior, xmax = Limite_Superior), height = 0.2, size = 0.8) +
+    geom_point(size = 3) +
+    geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
+    scale_color_manual(
+      name = "Nível de Significância",
+      breaks = c("Significativo", "Marginalmente Significativo", "Não Significativo"),
+      values = c(
+        "Significativo" = "red",
+        "Marginalmente Significativo" = "darkorange",
+        "Não Significativo" = "gray50"
+      ),
+      drop = FALSE
+    ) +
+    labs(
+      title = titulo_plot,
+      x = "Diferença Estimada nos Retornos Médios",
+      y = "Comparação Par a Par"
+    ) +
+    theme_bw() +
+    theme(legend.position = "bottom")
+  return(g)
+}
+```
+
+```{r, eval=F, echo=FALSE}
+install.packages("devtools")                    # you only have to install it once
+library(devtools)
+install_github("rstudio/rmarkdown")             # you only have to install it once
+library(rmarkdown)
+render("report_template.Rmd","pdf_document")    # this renders the pdf
+```
+
+
+## 1. Introdução
+O presente relatório detalha uma análise estatística abrangente para avaliar e comparar o desempenho de cinco ativos de renda variável. Utilizando uma série histórica de retornos mensais que abrange um período de 36 meses, o estudo busca entender se existem diferenças estatisticamente significativas no desempenho entre esses ativos e, em caso afirmativo, qual deles apresenta o perfil de risco-retorno mais favorável.
+
+A metodologia empregada vai além de uma simples comparação de médias, adotando uma abordagem multifacetada para garantir a robustez das conclusões. A análise inicia-se com uma avaliação descritiva e visual, incluindo métricas de retorno ajustado ao risco, como o Índice de Sharpe, e gráficos que ilustram a distribuição, evolução temporal e correlação entre os ativos.
+
+O pilar central do estudo é a Análise de Variância (ANOVA), empregada para testar a hipótese nula de igualdade entre os retornos médios. Esta análise inferencial é complementada por testes post-hoc de Tukey, para identificar as fontes específicas de variação, e é rigorosamente validada pela verificação completa das premissas estatísticas de homogeneidade de variâncias, normalidade e independência dos resíduos. Adicionalmente, uma análise de potência foi realizada para contextualizar a sensibilidade dos achados e a força das conclusões, especialmente nos casos onde diferenças não foram estatisticamente significativas.
+
+O objetivo deste documento é, portanto, fornecer uma recomendação de investimento baseada em evidências quantitativas sólidas, detalhando a metodologia, os resultados e as visualizações que levaram aos _insigths_ necessários para a conclusão final de que a ação com melhor performance e portanto recomendada é a ação 1.
+
+Os códigos implementados para realização do presente estudo de caso estão disponíveis no [repositório do github do grupo](https://github.com/Isaac-CI/EEE933-E/tree/ec2/EC2)
+
+## 2. Metodologia
+
+###2.1 Análise Exploratória de Dados (AED)
+
+Num primeiro momento, foi realizada uma exploração aprofundada dos dados fornecidos acerca do desempenho das ações para extrair estatísticas descritivas, identificar padrões e visualizar as características primárias de cada ativo. Após o carregamento dos preços históricos das ações avaliadas, os retornos mensais de cada uma das cinco ações e da taxa Selic foram calculados e organizados em um formato de dados longos para facilitar a análise e a plotagem.
+
+```{r, echo=TRUE}
+# Carrega os dados da taxa selic dos ultimos 36 meses e calcula os rendimentos mensais
+taxas_selic_anuais_historicas <- c(
+  rep(0.1365, 12), 0.1315, rep(0.1265, 2), 0.1215, rep(0.1165, 2), 
+  0.1115, rep(0.1065, 2), rep(0.1040, 3), rep(0.1065, 2), 0.1115, 
+  0.1215, rep(0.1315, 2), rep(0.1415, 2), 0.1465, rep(0.1490, 2), 0.1500
+)
+
+taxas_selic_mensais_historicas <- (1 + taxas_selic_anuais_historicas)^(1/12) - 1
+taxas_selic_mensais_periodo <- taxas_selic_mensais_historicas[2:36]
+
+# Carrega dados e calcula retornos mensais de cada uma das 5 ações
+
+nomes_acoes <- paste0("Acao_", 1:5)
+precos_df <- read_csv("DadosAcoesGrupoE.csv", col_names = nomes_acoes, show_col_types = FALSE)
+retornos_df <- as.data.frame(sapply(precos_df, function(coluna_preco) {
+  (coluna_preco[-length(coluna_preco)] - coluna_preco[-1]) / coluna_preco[-1]
+})) 
+
+excess_returns_df <- retornos_df - taxas_selic_mensais_periodo
+retornos_long_df <- retornos_df %>%
+  pivot_longer(cols = everything(), names_to = "Acao", values_to = "Retorno_Bruto") %>%
+  mutate(Acao = as.factor(Acao))
+excess_returns_long_df <- excess_returns_df %>%
+  pivot_longer(cols = everything(), names_to = "Acao", values_to = "Excesso_Retorno")
+```
+
+Num segundo momento, métricas como o retorno médio, devio padrão (como proxy do risco) e o índice de Sharpe para cada uma das ações foram calculadas e visualizações auxiliares como um boxplot da distribuição dos retornos das ações e da taxa selic e um histograma do valor do índice de Sharpe para cada ação em relação à selic foram produziadas. O Índice de Sharpe pode ser calculado de acordo com a seguinte equação:
+
+$$
+S_a = \frac{E[R_a - R_b]}{\sigma_a}
+$$
+Onde $R_a$ é a taxa de retorno da ação, $R_b$ é a taxa de retorno _benchmark_ (selic), $E[R_a - R_b]$ é o valor esperado do excesso do retorno da ação em relação ao retorno _benchmark_ e $\sigma_a$ é o desvio padrão do excesso do retorno da ação em relação ao _benchmark_.
+
+### 2.2 Definição da Hipótese e Análise Inferencial
+
+Após a análise preliminar descrita, a questão central da análise foi formalizada através de um teste de hipóteses para determinar se as diferenças observadas nos retornos médios eram estatisticamente significativas.
+
+`Hipótese Nula (H₀): Os retornos médios de todas as cinco ações são iguais. (μ₁ = μ₂ = μ₃ = μ₄ = μ₅)`
+
+`Hipótese Alternativa (Hₐ): O retorno médio de pelo menos uma das ações é diferente das demais.`
+
+Para testar essa hipótese, foi utilizada a Análise de Variância (ANOVA) de um fator. Este método foi escolhido por ser a ferramenta padrão para comparar as médias de três ou mais grupos, controlando a taxa de erro familiar que ocorreria com o uso de múltiplos testes t. Uma vez que a ANOVA se mostre significativa (rejeição de H₀), um teste post-hoc de Tukey HSD (Honest Significant Difference) será realizado para identificar quais pares específicos de ações apresentavam diferenças estatisticamente significativas.
+
+    [INSERIR GRÁFICO: INTERVALOS DE CONFIANÇA DO TESTE DE TUKEY]
+A figura acima ilustra os resultados do teste post-hoc, mostrando a estimativa da diferença de médias e o intervalo de confiança de 95% para cada par de ações, destacando as comparações classificadas como significativas (p-valor \le 0.05) e marginalmente significativas (0.05 < pvalor \le 0.1). 
+
+As comparações classificadas como significativas foram a 1-2 e 1-4, e a única marginalmente significativa foi a 1-5, todas as outras apresentando um p-valor superior as margens definidas, indicando que não há evidência suficiente para afirmar sua não equivalência estatística.
+
+### 2.3 Validação das Premissas do Modelo
+
+Por fim, é fato que a validade das conclusões da ANOVA depende de três premissas fundamentais sobre os resíduos do modelo, sendo elas a normalidade, a homocedasticidade e a independência dos resíduos obtidos na ANOVA. Cada premissa foi verificada tanto com um teste estatístico formal quanto com uma inspeção gráfica.
+
+No caso da premissa de que os erros do modelo seguem a distribuiação normal, o teste estatístico realizado foi o teste de __Shapiro-Wilk__ e a visualização foi realizada por um __Gráfico Normal Quantil-Quantil__. Já a premissa de que a variância dos resíduos é constante entre os grupos foi verificada pelo teste estatístico de __Fligner-Killeen__ e visualmente pelo mesmo boxplot da análise descritiva dos dados. Por fim, a premissa de que os erros são independentes (não autocorrelacionados) foi verificada pelo teste estatístico de __Durbin-Watson__ e visualmente pelo __Gráfico da Função de Autocorrelação (ACF)__ dos resíduos.
+
+## 3 Resultados e discussão
+
+### 3.1 Análise Exploratória de Dados (AED)
+#### 3.1.1 Estatísticas Descritivas:
+
+```{r, echo=TRUE}
+desc_stats <- retornos_long_df %>%
+  group_by(Acao) %>%
+  summarise(
+    Media_Retorno = mean(Retorno_Bruto, na.rm = TRUE),
+    Desvio_Padrao = sd(Retorno_Bruto, na.rm = TRUE),
+    .groups = 'drop'
+  )
+mean_excess_returns <- excess_returns_long_df %>%
+  group_by(Acao) %>%
+  summarise(Media_Excesso_Retorno = mean(Excesso_Retorno, na.rm = TRUE))
+desc_stats <- left_join(desc_stats, mean_excess_returns, by = "Acao")
+desc_stats <- desc_stats %>%
+  mutate(Indice_Sharpe = Media_Excesso_Retorno / Desvio_Padrao)
+
+print(kable(desc_stats, "pipe", digits = 4, caption = "Estatísticas Descritivas (Sharpe com Selic Histórica)"))
+```
+
+#### 3.1.2 Distribuição dos Retornos
+
+```{r boxplot, fig.cap="Boxplot da distribuição dos retornos das ações e da taxa selic. {#fig:boxplot}"}
+# PASSO 1: Criar um data frame para os retornos da Selic
+# As colunas devem ter os mesmos nomes do data frame dos retornos das ações ('Acao', 'Retorno_Bruto')
+selic_df <- data.frame(
+  Acao = "Selic",
+  Retorno_Bruto = taxas_selic_mensais_periodo
+)
+
+# PASSO 2: Unir os data frames das ações e da Selic
+df_combinado <- rbind(retornos_long_df, selic_df)
+
+# PASSO 3: Definir a ordem das categorias no eixo X para melhor visualização
+# Colocamos a Selic primeiro para servir como benchmark de referência
+df_combinado$Acao <- factor(df_combinado$Acao, levels = c("Selic", "Acao_1", "Acao_2", "Acao_3", "Acao_4", "Acao_5"))
+
+# PASSO 4: Gerar o boxplot aprimorado
+# Usaremos scale_fill_manual() para dar uma cor distinta à Selic
+boxplot_comparativo <- ggplot(df_combinado, aes(x = Acao, y = Retorno_Bruto, fill = Acao)) +
+  geom_boxplot() +
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") + # Linha de referência no zero
+  
+  # Define uma paleta de cores manual para destacar a Selic
+  scale_fill_manual(
+    name = "Ativo",
+    values = c(
+      "Selic" = "skyblue", 
+      "Acao_1" = "gray80", 
+      "Acao_2" = "gray80", 
+      "Acao_3" = "gray80", 
+      "Acao_4" = "gray80", 
+      "Acao_5" = "gray80"
+    )
+  ) +
+  
+  labs(
+    title = "Distribuição dos Retornos Mensais: Ações vs. Selic",
+    subtitle = "Período de análise: 2022-2025",
+    x = "Ativo",
+    y = "Retorno Bruto Mensal"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none") # Remove a legenda, pois a distinção de cores é clara
+
+print(boxplot_comparativo)
+```
+
+A figura \@ref(fig:boxplot) acima ilustra a comparação visual da distribuição dos retornos mensais de cada ação contra o benchmark da Selic. Nela, é possível notar que a o tamanho das caixas de cada uma das ações é distinto, indicativo de qe há certa heterogeneidade nas variâncias observadas nas ações. Além disso, fica claro que apenas a ação 1 apresenta uma mediana superior à mediana da taxa selic, sendo uma possível evidencia de desempenho superior às demais ações.
+
+#### 3.1.3 Desempenho Ajustado ao Risco
+
+```{r histograma, fig.cap="Histograma do valor do índice de Sharpe de cada ação em relação a selic. {#fig:hist}"}
+# Gráfico de barras para comparar o Índice de Sharpe
+# Usamos reorder(Acao, -Indice_Sharpe) para ordenar as barras da maior para a menor
+barchart_sharpe <- ggplot(desc_stats, aes(x = reorder(Acao, -Indice_Sharpe), y = Indice_Sharpe, fill = Acao)) +
+  geom_bar(stat = "identity") +
+  geom_text(aes(label = round(Indice_Sharpe, 2)), vjust = ifelse(desc_stats$Indice_Sharpe > 0, 1.5, -0.5)) + # Adiciona o rótulo do valor
+  labs(
+    title = "Comparação do Índice de Sharpe por Ação",
+    subtitle = "Maior valor indica melhor retorno ajustado ao risco",
+    x = "Ação",
+    y = "Índice de Sharpe"
+  ) +
+  theme_minimal() +
+  theme(legend.position = "none")
+
+print(barchart_sharpe)
+```
+
+A figura \@ref(fig:hist) acima resume visualmente a conclusão da análise de desempenho, destacando a ação 1 como único ativo com performance positiva ajustada ao risco, corroborando com as inferências tomadas com base no boxplot.
+
+
+### 3.2 ANOVA e teste post-hoc TUKEY-HSD
+
+    [Inserir Código: ANOVA e TUKEY_HSD]
+    
+    [INSERIR GRÁFICO: INTERVALOS DE CONFIANÇA DO TESTE DE TUKEY]
+A figura acima ilustra os resultados do teste post-hoc, mostrando a estimativa da diferença de médias e o intervalo de confiança de 95% para cada par de ações, destacando as comparações classificadas como significativas (p-valor \le 0.05) e marginalmente significativas (0.05 < pvalor \le 0.1). 
+
+As comparações classificadas como significativas foram a 1-2 e 1-4, e a única marginalmente significativa foi a 1-5, todas as outras apresentando um p-valor superior as margens definidas, indicando que não há evidência suficiente para afirmar sua não equivalência estatística.
+
+### 3.3 Validação das Premissas do Modelo
+#### 3.3.1 Normalidade dos Resíduos
+
+        [INSERIR GRÁFICO: NORMAL Q-Q PLOT DOS RESÍDUOS]
+A figura acima ilustra visualmente o alinhamento dos resíduos com uma distribuição normal teórica, evidenciando sua normalidade, evidênciada também pelo p-valor elevado () obtido no teste de Shapiro-Wilk realizado.
+
+#### 2.3.2 Homogeneidade de Variâncias (Homocedasticidade)
+
+    [Inserir codigo do teste de Fligner-Killeen]
+
+#### 3.3.3 Independência dos Resíduos
+
+        [INSERIR GRÁFICO: ACF DOS RESÍDUOS]
+A figura acima mostra que não há correlações significativas nos resíduos na maior parte das diferentes defasagens temporais, suportando a premissa de independência. A única defasagem que apresentou correlação significativa foi a de 7 meses. 
+
+Considerando a natureza dos dados, o esperado caso de fato houvesse autocorrelação é que esta ocorresse em baixas defasagens (1, 2 ou 3 meses), uma vez que indicam efeitos de curto prazo como "momentum" ou "reversão à média". Além disso, a força da correlação é baixa, superando por muito pouco o _threshold_ de 5%, o que aliado ao efeito esperado da aleatoriedade de que pelo menos 1 a cada 20 observações em séries perfeitamente aleatórias supere a _threshold_ de significância de 5% suporta a conclusão que a significância observada nesta defasagem é fruto de aleatoriedade e não representa autocorrelação real.
+
+## 4. Conclusões
+
+A partir dos resultados obtidos, conclui-se que não evidências suficientes para que a hipótese nula seja rejeitada com os testes realizados, principalmente no subconjunto dos indivíduos do sexo masculino, uma vez que apresentam um tamanho do efeito relevante e um intervalo de confiança significativamente mais estreito quando comparado ao subconjunto dos indivíduos do sexo feminino, que não apresentou um tamanho de efeito relevante. 
+
+A diferença entre os subconjuntos pode ser explicada por meio do tamanho do espaço amostral, que para o subconjunto feminino é significativamente menor, sendo até mesmo rejeitada a hipótese de normalidade dos dados no subconjunto de alunas do semestre 2017.1. Essa ocorrência pode ter influenciado a confiabilidade do __teste t__ realizado, uma vez que ele depende da premissa de normalidade da distribuição e, quando é possível obter um maior espaço amostral, gera resultados mais próximos ao populacional.
+
+Deste modo, futuras melhoras para o estudo de caso realizado podem partir de duas abordagens. A primeira consiste em adaptar o teste estatístico no subconjunto dos alunos do sexo feminino, de modo que o teste utilizado não se baseie na suposição da normalidade dos dados, a exemplo do _Mann-Whitney-Wilcoxon (ou teste U de Mann-Whitney)_.
+
+A segunda abordagem é mais direta e trabalhosa, consistindo em aumentar o espaço amostral ao entrevistar alunos de múltiplas turmas ao invés de apenas turmas da disciplina de projeto e análise de experimentos, o que resolveria o problema do espaço amostral reduzido.
+
+## Apendice A - Funções dos integrantes
+- Isaac: Responsável pelo projeto e implementação do estudo de caso, esboçar o relatório e discutir a realização do estudo, bem como seus resultados;
+- Stéfani: Responsável por discutir a realização do estudo, bem como seus resultados, redigir o texto completo completando e incrementando o esboço;
+- Homero: Responsável por discutir a realização do estudo, bem como seus resultados, revisar e complementar o relatório e redigir a versão final.

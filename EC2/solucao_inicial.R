@@ -34,7 +34,7 @@ library(pwr)
 #'
 #' @return Um objeto ggplot.
 #'
-plotar_tukey_com_destaque <- function(tukey_confint_obj,
+plot_tukey_CI <- function(tukey_confint_obj,
                                       comp_significativas = NULL,
                                       comp_marginais = NULL,
                                       titulo = NULL) {
@@ -70,22 +70,16 @@ plotar_tukey_com_destaque <- function(tukey_confint_obj,
     geom_errorbarh(aes(xmin = Limite_Inferior, xmax = Limite_Superior), height = 0.2, size = 0.8) +
     geom_point(size = 3) +
     geom_vline(xintercept = 0, linetype = "dashed", color = "black") +
-    
-    # Controlar manualmente as cores e a legenda
     scale_color_manual(
       name = "Nível de Significância",
-      # O argumento 'breaks' garante a ordem correta na legenda
       breaks = c("Significativo", "Marginalmente Significativo", "Não Significativo"),
       values = c(
         "Significativo" = "red",
         "Marginalmente Significativo" = "darkorange",
         "Não Significativo" = "gray50"
       ),
-      # O argumento 'drop = FALSE' garante que todos os níveis apareçam na legenda, mesmo que não existam no dado
       drop = FALSE
     ) +
-    
-    # Rótulos e tema
     labs(
       title = titulo_plot,
       x = "Diferença Estimada nos Retornos Médios",
@@ -93,8 +87,6 @@ plotar_tukey_com_destaque <- function(tukey_confint_obj,
     ) +
     theme_bw() +
     theme(legend.position = "bottom")
-  
-  # Retornar o objeto ggplot
   return(g)
 }
 
@@ -242,7 +234,7 @@ summary(tukey_glht)
 tukey_CI <- confint(tukey_glht, level = 0.95)
 sig <- c("Acao_2 - Acao_1", "Acao_4 - Acao_1")
 marginal <- "Acao_5 - Acao_1"
-CI_plot <- plotar_tukey_com_destaque(
+CI_plot <- plot_tukey_CI(
   tukey_confint_obj = tukey_CI,
   comp_significativas = sig,
   comp_marginais = marginal
