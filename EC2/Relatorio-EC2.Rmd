@@ -6,6 +6,7 @@ output:
   pdf_document:
     latex_engine: xelatex
     fig_caption: yes
+    extra_dependencies: ["float"]
   html_document:
     df_print: paged
 ---
@@ -194,7 +195,7 @@ print(kable(desc_stats, "pipe", digits = 4, caption = "Estatísticas Descritivas
 
 #### 3.1.2 Distribuição dos Retornos
 
-```{r boxplot, fig.cap="Boxplot da distribuição dos retornos das ações e da taxa selic. {#fig:boxplot}"}
+```{r boxplot, fig.pos='H', fig.cap="Boxplot da distribuição dos retornos das ações e da taxa selic."}
 # PASSO 1: Criar um data frame para os retornos da Selic
 # As colunas devem ter os mesmos nomes do data frame dos retornos das ações ('Acao', 'Retorno_Bruto')
 selic_df <- data.frame(
@@ -240,11 +241,11 @@ boxplot_comparativo <- ggplot(df_combinado, aes(x = Acao, y = Retorno_Bruto, fil
 print(boxplot_comparativo)
 ```
 
-A figura \@ref(fig:boxplot) acima ilustra a comparação visual da distribuição dos retornos mensais de cada ação contra o benchmark da Selic. Nela, é possível notar que a o tamanho das caixas de cada uma das ações é distinto, indicativo de qe há certa heterogeneidade nas variâncias observadas nas ações. Além disso, fica claro que apenas a ação 1 apresenta uma mediana superior à mediana da taxa selic, sendo uma possível evidencia de desempenho superior às demais ações.
+A figura 1 ilustra a comparação visual da distribuição dos retornos mensais de cada ação contra o benchmark da Selic. Nela, é possível notar que a o tamanho das caixas de cada uma das ações é distinto, indicativo de que pode haver certa heterogeneidade nas variâncias observadas nas ações. Além disso, fica claro que apenas a ação 1 apresenta uma mediana superior à mediana da taxa selic, sendo uma possível evidencia de desempenho superior às demais ações.
 
 #### 3.1.3 Desempenho Ajustado ao Risco
 
-```{r histograma, fig.cap="Histograma do valor do índice de Sharpe de cada ação em relação a selic. {#fig:hist}"}
+```{r histograma, fig.pos='H', fig.cap="Histograma do valor do índice de Sharpe de cada ação em relação a selic."}
 # Gráfico de barras para comparar o Índice de Sharpe
 # Usamos reorder(Acao, -Indice_Sharpe) para ordenar as barras da maior para a menor
 barchart_sharpe <- ggplot(desc_stats, aes(x = reorder(Acao, -Indice_Sharpe), y = Indice_Sharpe, fill = Acao)) +
@@ -262,44 +263,90 @@ barchart_sharpe <- ggplot(desc_stats, aes(x = reorder(Acao, -Indice_Sharpe), y =
 print(barchart_sharpe)
 ```
 
-A figura \@ref(fig:hist) acima resume visualmente a conclusão da análise de desempenho, destacando a ação 1 como único ativo com performance positiva ajustada ao risco, corroborando com as inferências tomadas com base no boxplot.
+A figura 2 resume visualmente a conclusão da análise de desempenho, destacando a ação 1 como único ativo com performance positiva ajustada ao risco, corroborando com as inferências tomadas com base no boxplot.
 
 
 ### 3.2 ANOVA e teste post-hoc TUKEY-HSD
 
-    [Inserir Código: ANOVA e TUKEY_HSD]
-    
-    [INSERIR GRÁFICO: INTERVALOS DE CONFIANÇA DO TESTE DE TUKEY]
-A figura acima ilustra os resultados do teste post-hoc, mostrando a estimativa da diferença de médias e o intervalo de confiança de 95% para cada par de ações, destacando as comparações classificadas como significativas (p-valor \le 0.05) e marginalmente significativas (0.05 < pvalor \le 0.1). 
+```{r, echo=TRUE}
+retornos_long_df_para_teste <- retornos_long_df %>% rename(Retorno = Retorno_Bruto)
+
+anova_result <- aov(Retorno ~ Acao, data = retornos_long_df_para_teste)
+anova_result <- aov(Retorno ~ Acao, data = retornos_long_df_para_teste)
+print(summary(anova_result))
+p_valor_anova <- summary(anova_result)[[1]][["Pr(>F)"]][1]
+```
+
+```{r, echo=TRUE}
+tukey_glht <- glht(anova_result, linfct = mcp(Acao = "Tukey"))
+summary(tukey_glht)
+```
+
+```{r TUKEY_CI, fig.pos='H', fig.cap="Intervalos de confiança do teste post-hoc Tukey-HSD."}
+tukey_CI <- confint(tukey_glht, level = 0.95)
+sig <- c("Acao_2 - Acao_1", "Acao_4 - Acao_1")
+marginal <- "Acao_5 - Acao_1"
+CI_plot <- plot_tukey_CI(
+  tukey_confint_obj = tukey_CI,
+  comp_significativas = sig,
+  comp_marginais = marginal
+)
+print(CI_plot)
+```
+
+A figura 3 ilustra os resultados do teste post-hoc, mostrando a estimativa da diferença de médias e o intervalo de confiança de 95% para cada par de ações, destacando as comparações classificadas como significativas (p-valor \le 0.05) e marginalmente significativas (0.05 < pvalor \le 0.1). 
 
 As comparações classificadas como significativas foram a 1-2 e 1-4, e a única marginalmente significativa foi a 1-5, todas as outras apresentando um p-valor superior as margens definidas, indicando que não há evidência suficiente para afirmar sua não equivalência estatística.
 
 ### 3.3 Validação das Premissas do Modelo
 #### 3.3.1 Normalidade dos Resíduos
 
-        [INSERIR GRÁFICO: NORMAL Q-Q PLOT DOS RESÍDUOS]
-A figura acima ilustra visualmente o alinhamento dos resíduos com uma distribuição normal teórica, evidenciando sua normalidade, evidênciada também pelo p-valor elevado () obtido no teste de Shapiro-Wilk realizado.
+```{r, echo=TRUE}
+residuos <- residuals(anova_result)
+shapiro_results <- shapiro.test(residuos)
+print(shapiro_results)
+```
+
+```{r res_norm, fig.pos='H', fig.cap="Gráfico Q-Q para verificação da premissa de normalidade dos resíduos do modelo ANOVA."}
+qqPlot(residuos,
+       main = "Gráfico Q-Q", # Título principal
+       xlab = "Quantis Teóricos da Distribuição Normal",        # Legenda do eixo X
+       ylab = "Resíduos do Modelo",      # Legenda do eixo Y
+       pch = 16,
+       lwd = 2,  # Um pouco menos espesso que antes para equilibrar
+       cex = 1.5 # Um pouco menor para um visual mais limpo
+)
+```
+
+A figura 4 ilustra visualmente o alinhamento dos resíduos com uma distribuição normal teórica, evidenciando sua normalidade, evidênciada também pelo p-valor elevado (0.2469) obtido no teste de Shapiro-Wilk realizado.
 
 #### 2.3.2 Homogeneidade de Variâncias (Homocedasticidade)
 
-    [Inserir codigo do teste de Fligner-Killeen]
+```{r, echo=TRUE}
+fligner_test_result <- fligner.test(Retorno ~ Acao, data = retornos_long_df_para_teste)
+print(fligner_test_result)
+```
+
+O teste de _Fligner-Killeen_ realizado retornou um p-valor de 0.1936, que não rejeita a hipótese nula de que as variâncias dos resíduos são iguais, o que contrasta com o observado no boxplot da figura 1, que demonstra certa discrepância no tamanho das caixas de cada uma das ações. Para os fins do presente estudo de caso, a premissa foi considerada satisfeita, uma vez que o teste estatístico é mais confiável que uma análise gráfica.
 
 #### 3.3.3 Independência dos Resíduos
 
-        [INSERIR GRÁFICO: ACF DOS RESÍDUOS]
-A figura acima mostra que não há correlações significativas nos resíduos na maior parte das diferentes defasagens temporais, suportando a premissa de independência. A única defasagem que apresentou correlação significativa foi a de 7 meses. 
+```{r, echo=TRUE}
+durbin_watson_result <- car::durbinWatsonTest(anova_result)
+print(durbin_watson_result)
+```
+
+```{r res_ind, fig.pos='H', fig.cap="Gráfico da Função de Autocorrelação (ACF) dos resíduos do modelo ANOVA"}
+acf(residuos, main = "Função de Autocorrelação dos Resíduos da ANOVA")
+```
+
+O teste de __Durbin-Watson__ realizado obteve um p-valor de 0.274, que não é suficiente para rejeitar a hipótese nula de que não há autocorrelação entre os resíduos, ou seja, os resultados do teste evidenciam a independência dos dados.
+
+Além disso, a figura 5 mostra que não há correlações significativas nos resíduos na maior parte das diferentes defasagens temporais, suportando a premissa de independência. A única defasagem que apresentou correlação significativa foi a de 7 meses. 
 
 Considerando a natureza dos dados, o esperado caso de fato houvesse autocorrelação é que esta ocorresse em baixas defasagens (1, 2 ou 3 meses), uma vez que indicam efeitos de curto prazo como "momentum" ou "reversão à média". Além disso, a força da correlação é baixa, superando por muito pouco o _threshold_ de 5%, o que aliado ao efeito esperado da aleatoriedade de que pelo menos 1 a cada 20 observações em séries perfeitamente aleatórias supere a _threshold_ de significância de 5% suporta a conclusão que a significância observada nesta defasagem é fruto de aleatoriedade e não representa autocorrelação real.
 
 ## 4. Conclusões
-
-A partir dos resultados obtidos, conclui-se que não evidências suficientes para que a hipótese nula seja rejeitada com os testes realizados, principalmente no subconjunto dos indivíduos do sexo masculino, uma vez que apresentam um tamanho do efeito relevante e um intervalo de confiança significativamente mais estreito quando comparado ao subconjunto dos indivíduos do sexo feminino, que não apresentou um tamanho de efeito relevante. 
-
-A diferença entre os subconjuntos pode ser explicada por meio do tamanho do espaço amostral, que para o subconjunto feminino é significativamente menor, sendo até mesmo rejeitada a hipótese de normalidade dos dados no subconjunto de alunas do semestre 2017.1. Essa ocorrência pode ter influenciado a confiabilidade do __teste t__ realizado, uma vez que ele depende da premissa de normalidade da distribuição e, quando é possível obter um maior espaço amostral, gera resultados mais próximos ao populacional.
-
-Deste modo, futuras melhoras para o estudo de caso realizado podem partir de duas abordagens. A primeira consiste em adaptar o teste estatístico no subconjunto dos alunos do sexo feminino, de modo que o teste utilizado não se baseie na suposição da normalidade dos dados, a exemplo do _Mann-Whitney-Wilcoxon (ou teste U de Mann-Whitney)_.
-
-A segunda abordagem é mais direta e trabalhosa, consistindo em aumentar o espaço amostral ao entrevistar alunos de múltiplas turmas ao invés de apenas turmas da disciplina de projeto e análise de experimentos, o que resolveria o problema do espaço amostral reduzido.
 
 ## Apendice A - Funções dos integrantes
 - Isaac: Responsável pelo projeto e implementação do estudo de caso, esboçar o relatório e discutir a realização do estudo, bem como seus resultados;
