@@ -323,7 +323,7 @@ Para garantir a correta aplicação do teste de hipóteses por meio do ANOVA e o
 
 #### 3.3.1 Normalidade dos Resíduos
 
-Testamos a normalidade dos resíduos pelo teste de __Shapiro-Wilk__.
+A normalidade dos resíduos foi testada pelo teste de __Shapiro-Wilk__.
 ```{r, echo=TRUE}
 residuos <- residuals(anova_result)
 shapiro_results <- shapiro.test(residuos)
@@ -345,7 +345,7 @@ A Figura 4 ilustra visualmente o alinhamento dos resíduos com uma distribuiçã
 
 #### 3.3.2 Homogeneidade de Variâncias (Homocedasticidade)
 
-Testamos a homocedasticidade das variâncias pelo teste de __Fligner-Killeen__.
+A homocedasticidade das variâncias foi testada por meio do método __Fligner-Killeen__.
 ```{r, echo=TRUE}
 fligner_test_result <- fligner.test(Retorno ~ Acao, data = retornos_long_df_para_teste)
 print(fligner_test_result)
@@ -354,7 +354,7 @@ O teste de __Fligner-Killeen__ realizado retornou um p-valor de 0.1936, não rej
 
 #### 3.3.3 Independência dos Resíduos
 
-Testamos a não correlação dos resíduos pelo teste de __Durbin-Watson__.
+A não correlação dos resíduos foi testada por __Durbin-Watson__.
 ```{r, echo=TRUE}
 durbin_watson_result <- car::durbinWatsonTest(anova_result)
 print(durbin_watson_result)
