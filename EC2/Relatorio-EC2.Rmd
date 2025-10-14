@@ -1,7 +1,7 @@
 ---
 title: 'Estudo de Caso 02: Análise da rentabilidade de ações'
 author: "Homero Castro, Isaac Marinho e Stéfani Verissimo"
-date: "12 de outubro de 2025"
+date: "13 de outubro de 2025"
 output:
   pdf_document:
     latex_engine: xelatex
@@ -97,23 +97,27 @@ library(rmarkdown)
 render("report_template.Rmd","pdf_document")    # this renders the pdf
 ```
 
+## Resumo 
+
+O presente relatório detalha uma análise estatística abrangente para avaliar e comparar o desempenho de cinco ativos de renda variável. Utilizando uma série histórica de retornos mensais que abrange um período de 36 meses, o estudo busca entender, por meio de testes de hipóteses, se existem diferenças estatisticamente significativas no desempenho entre esses ativos e, em caso afirmativo, qual deles apresenta o perfil de risco-retorno mais favorável.
 
 ## 1. Introdução
-O presente relatório detalha uma análise estatística abrangente para avaliar e comparar o desempenho de cinco ativos de renda variável. Utilizando uma série histórica de retornos mensais que abrange um período de 36 meses, o estudo busca entender se existem diferenças estatisticamente significativas no desempenho entre esses ativos e, em caso afirmativo, qual deles apresenta o perfil de risco-retorno mais favorável.
+
+Neste estudo de caso, é considerado um cenário no qual um investidor deseja investir seu montante financeiro integralmente em uma ação, de forma a garantir a maior rentabilidade mensal possível. Para essa decisão, foram selecionadas cinco ações e coletados os preços de fechamento dessas ações ao longo de 36 meses. O propósito do trabalho é determinar, a partir desses dados coletados e por meio de ferramentas estatísticas, qual dessas ações apresenta maior potencial. 
 
 A metodologia empregada vai além de uma simples comparação de médias, adotando uma abordagem multifacetada para garantir a robustez das conclusões. A análise inicia-se com uma avaliação descritiva e visual, incluindo métricas de retorno ajustado ao risco, como o Índice de Sharpe, e gráficos que ilustram a distribuição, evolução temporal e correlação entre os ativos.
 
-O pilar central do estudo é a Análise de Variância (ANOVA), empregada para testar a hipótese nula de igualdade entre os retornos médios. Esta análise inferencial é complementada por testes post-hoc de Tukey, para identificar as fontes específicas de variação, e é rigorosamente validada pela verificação completa das premissas estatísticas de homogeneidade de variâncias, normalidade e independência dos resíduos. Adicionalmente, uma análise de potência foi realizada para contextualizar a sensibilidade dos achados e a força das conclusões, especialmente nos casos onde diferenças não foram estatisticamente significativas.
+O pilar central do estudo é a Análise de Variância (ANOVA), empregada para testar a hipótese nula de igualdade entre os retornos médios. Essa análise inferencial é complementada por testes _post hoc_ de Tukey, para identificar as fontes específicas de variação, e é rigorosamente validada pela verificação completa das premissas estatísticas de homogeneidade de variâncias, normalidade e independência dos resíduos. Adicionalmente, uma análise do poder foi realizada para contextualizar a sensibilidade dos achados e a força das conclusões, especialmente nos casos onde diferenças não foram estatisticamente significativas.
 
-O objetivo deste documento é, portanto, fornecer uma recomendação de investimento baseada em evidências quantitativas sólidas, detalhando a metodologia, os resultados e as visualizações que levaram aos _insigths_ necessários para a conclusão final de que a ação com melhor performance e portanto recomendada é a ação 1.
+O objetivo deste documento é, portanto, fornecer uma recomendação de investimento baseada em evidências quantitativas sólidas, detalhando a metodologia, os resultados e as visualizações que levaram aos _insights_ necessários para a conclusão final. 
 
-Os códigos implementados para realização do presente estudo de caso estão disponíveis no [repositório do github do grupo](https://github.com/Isaac-CI/EEE933-E/tree/ec2/EC2)
+Os códigos implementados para realização do presente estudo de caso estão disponíveis no [repositório do GitHub do grupo.](https://github.com/Isaac-CI/EEE933-E/tree/ec2/EC2)
 
 ## 2. Metodologia
 
-###2.1 Análise Exploratória de Dados (AED)
+### 2.1 Análise Exploratória de Dados (AED)
 
-Num primeiro momento, foi realizada uma exploração aprofundada dos dados fornecidos acerca do desempenho das ações para extrair estatísticas descritivas, identificar padrões e visualizar as características primárias de cada ativo. Após o carregamento dos preços históricos das ações avaliadas, os retornos mensais de cada uma das cinco ações e da taxa Selic foram calculados e organizados em um formato de dados longos para facilitar a análise e a plotagem.
+Em um primeiro momento, foi realizada uma exploração aprofundada dos dados fornecidos acerca do desempenho das ações para extrair estatísticas descritivas, identificar padrões e visualizar as características primárias de cada ativo. Após o carregamento dos preços históricos das ações avaliadas, os retornos mensais de cada uma das cinco ações e da taxa Selic foram calculados e organizados em um formato de dados longos para facilitar a análise e a plotagem.
 
 ```{r, echo=TRUE}
 # Carrega os dados da taxa selic dos ultimos 36 meses e calcula os rendimentos mensais
@@ -129,7 +133,8 @@ taxas_selic_mensais_periodo <- taxas_selic_mensais_historicas[2:36]
 # Carrega dados e calcula retornos mensais de cada uma das 5 ações
 
 nomes_acoes <- paste0("Acao_", 1:5)
-precos_df <- read_csv("DadosAcoesGrupoE.csv", col_names = nomes_acoes, show_col_types = FALSE)
+precos_df <- read_csv("DadosAcoesGrupoE.csv", col_names = nomes_acoes, 
+                      show_col_types = FALSE)
 retornos_df <- as.data.frame(sapply(precos_df, function(coluna_preco) {
   (coluna_preco[-length(coluna_preco)] - coluna_preco[-1]) / coluna_preco[-1]
 })) 
@@ -142,7 +147,7 @@ excess_returns_long_df <- excess_returns_df %>%
   pivot_longer(cols = everything(), names_to = "Acao", values_to = "Excesso_Retorno")
 ```
 
-Num segundo momento, métricas como o retorno médio, devio padrão (como proxy do risco) e o índice de Sharpe para cada uma das ações foram calculadas e visualizações auxiliares como um boxplot da distribuição dos retornos das ações e da taxa selic e um histograma do valor do índice de Sharpe para cada ação em relação à selic foram produziadas. O Índice de Sharpe pode ser calculado de acordo com a seguinte equação:
+Na próxima subseção, métricas como o retorno médio, devio padrão (como proxy do risco) e o índice de Sharpe para cada uma das ações foram calculadas e visualizações auxiliares como um boxplot da distribuição dos retornos das ações e da taxa selic e um histograma do valor do índice de Sharpe para cada ação em relação à selic foram produziadas. O Índice de Sharpe pode ser calculado de acordo com a seguinte equação:
 
 $$
 S_a = \frac{E[R_a - R_b]}{\sigma_a}
@@ -153,29 +158,27 @@ Onde $R_a$ é a taxa de retorno da ação, $R_b$ é a taxa de retorno _benchmark
 
 Após a análise preliminar descrita, a questão central da análise foi formalizada através de um teste de hipóteses para determinar se as diferenças observadas nos retornos médios eram estatisticamente significativas.
 
-`Hipótese Nula (H₀): Os retornos médios de todas as cinco ações são iguais. (μ₁ = μ₂ = μ₃ = μ₄ = μ₅)`
+`Hipótese Nula (`$H_0$`): Os retornos médios de todas as cinco ações são iguais. (`$\mu_1$` = `$\mu_2$` = `$\mu_3$` = `$\mu_4$` = `$\mu_5$`)`
 
-`Hipótese Alternativa (Hₐ): O retorno médio de pelo menos uma das ações é diferente das demais.`
+`Hipótese Alternativa (`$H_1$`): O retorno médio de pelo menos uma das ações é diferente das demais.`
 
-Para testar essa hipótese, foi utilizada a Análise de Variância (ANOVA) de um fator. Este método foi escolhido por ser a ferramenta padrão para comparar as médias de três ou mais grupos, controlando a taxa de erro familiar que ocorreria com o uso de múltiplos testes t. Uma vez que a ANOVA se mostre significativa (rejeição de H₀), um teste post-hoc de Tukey HSD (Honest Significant Difference) será realizado para identificar quais pares específicos de ações apresentavam diferenças estatisticamente significativas.
+Para testar essa hipótese, foi utilizada a Análise de Variância (ANOVA) de um fator. Este método foi escolhido por ser a ferramenta padrão para comparar as médias de três ou mais grupos, controlando a taxa de erro familiar que ocorreria com o uso de múltiplos testes t. Uma vez que a ANOVA se mostre significativa (rejeição de $H_0$), um teste _post hoc_ de Tukey HSD (Honest Significant Difference) será realizado para identificar quais pares específicos de ações apresentavam diferenças estatisticamente significativas.
 
-    [INSERIR GRÁFICO: INTERVALOS DE CONFIANÇA DO TESTE DE TUKEY]
-A figura acima ilustra os resultados do teste post-hoc, mostrando a estimativa da diferença de médias e o intervalo de confiança de 95% para cada par de ações, destacando as comparações classificadas como significativas (p-valor \le 0.05) e marginalmente significativas (0.05 < pvalor \le 0.1). 
-
-As comparações classificadas como significativas foram a 1-2 e 1-4, e a única marginalmente significativa foi a 1-5, todas as outras apresentando um p-valor superior as margens definidas, indicando que não há evidência suficiente para afirmar sua não equivalência estatística.
+Durante todo o estudo de caso, foi utilizado um nível de confiança de 95\%, ou seja, foi adotado um $\alpha = 0.05$. Por fim, para avaliar a relevância prática dos resultados, foi encontrado o tamanho do efeito por meio do cálculo do poder do teste ANOVA realizado, considerando um delta equivalente a 1 desvio padrão.
 
 ### 2.3 Validação das Premissas do Modelo
 
-Por fim, é fato que a validade das conclusões da ANOVA depende de três premissas fundamentais sobre os resíduos do modelo, sendo elas a normalidade, a homocedasticidade e a independência dos resíduos obtidos na ANOVA. Cada premissa foi verificada tanto com um teste estatístico formal quanto com uma inspeção gráfica.
+É fato que a validade das conclusões da ANOVA depende de três premissas fundamentais sobre os resíduos do modelo, sendo elas a normalidade, a homocedasticidade e a independência dos resíduos obtidos na ANOVA. Cada premissa foi verificada tanto com um teste estatístico formal quanto com uma inspeção gráfica.
 
-No caso da premissa de que os erros do modelo seguem a distribuiação normal, o teste estatístico realizado foi o teste de __Shapiro-Wilk__ e a visualização foi realizada por um __Gráfico Normal Quantil-Quantil__. Já a premissa de que a variância dos resíduos é constante entre os grupos foi verificada pelo teste estatístico de __Fligner-Killeen__ e visualmente pelo mesmo boxplot da análise descritiva dos dados. Por fim, a premissa de que os erros são independentes (não autocorrelacionados) foi verificada pelo teste estatístico de __Durbin-Watson__ e visualmente pelo __Gráfico da Função de Autocorrelação (ACF)__ dos resíduos.
+No caso da premissa de que os resíduos do modelo seguem a distribuiação normal, o teste estatístico realizado foi o teste de __Shapiro-Wilk__ e a visualização foi realizada por um __Gráfico Normal Quantil-Quantil__. Já a premissa de que a variância dos resíduos é constante entre os grupos foi verificada pelo teste estatístico de __Fligner-Killeen__ e visualmente pelo mesmo boxplot da análise descritiva dos dados. Por fim, a premissa de que os erros são independentes (não autocorrelacionados) foi verificada pelo teste estatístico de __Durbin-Watson__ e visualmente pelo __Gráfico da Função de Autocorrelação (ACF)__ dos resíduos.
 
 ## 3 Resultados e discussão
 
 ### 3.1 Análise Exploratória de Dados (AED)
-#### 3.1.1 Estatísticas Descritivas:
 
-```{r, echo=TRUE}
+#### 3.1.1 Estatísticas Descritivas:
+As estatísticas descritivas dos dados foram calculadas da seguinte maneira:
+```{r, echo=TRUE, fig.pos='H'}
 desc_stats <- retornos_long_df %>%
   group_by(Acao) %>%
   summarise(
@@ -190,14 +193,17 @@ desc_stats <- left_join(desc_stats, mean_excess_returns, by = "Acao")
 desc_stats <- desc_stats %>%
   mutate(Indice_Sharpe = Media_Excesso_Retorno / Desvio_Padrao)
 
-print(kable(desc_stats, "pipe", digits = 4, caption = "Estatísticas Descritivas (Sharpe com Selic Histórica)"))
+print(kable(desc_stats, "pipe", digits = 4, 
+            caption = "Estatísticas Descritivas (Sharpe com Selic Histórica)"))
 ```
 
-#### 3.1.2 Distribuição dos Retornos
 
+#### 3.1.2 Distribuição dos Retornos
+Para a análise gráfica da distribuição dos retornos foi gerado o boxplot:
 ```{r boxplot, fig.pos='H', fig.cap="Boxplot da distribuição dos retornos das ações e da taxa selic."}
 # PASSO 1: Criar um data frame para os retornos da Selic
-# As colunas devem ter os mesmos nomes do data frame dos retornos das ações ('Acao', 'Retorno_Bruto')
+# As colunas devem ter os mesmos nomes do data frame dos retornos das ações ('Acao', 
+# 'Retorno_Bruto')
 selic_df <- data.frame(
   Acao = "Selic",
   Retorno_Bruto = taxas_selic_mensais_periodo
@@ -208,13 +214,16 @@ df_combinado <- rbind(retornos_long_df, selic_df)
 
 # PASSO 3: Definir a ordem das categorias no eixo X para melhor visualização
 # Colocamos a Selic primeiro para servir como benchmark de referência
-df_combinado$Acao <- factor(df_combinado$Acao, levels = c("Selic", "Acao_1", "Acao_2", "Acao_3", "Acao_4", "Acao_5"))
+df_combinado$Acao <- factor(df_combinado$Acao, levels = c("Selic", "Acao_1", "Acao_2", 
+                                                          "Acao_3", "Acao_4", "Acao_5"))
 
 # PASSO 4: Gerar o boxplot aprimorado
 # Usaremos scale_fill_manual() para dar uma cor distinta à Selic
-boxplot_comparativo <- ggplot(df_combinado, aes(x = Acao, y = Retorno_Bruto, fill = Acao)) +
+boxplot_comparativo <- ggplot(df_combinado, aes(x = Acao, y = Retorno_Bruto, 
+                                                fill = Acao)) +
   geom_boxplot() +
-  geom_hline(yintercept = 0, linetype = "dashed", color = "black") + # Linha de referência no zero
+  geom_hline(yintercept = 0, linetype = "dashed", color = "black") + # Linha de 
+  # referência no zero
   
   # Define uma paleta de cores manual para destacar a Selic
   scale_fill_manual(
@@ -241,16 +250,19 @@ boxplot_comparativo <- ggplot(df_combinado, aes(x = Acao, y = Retorno_Bruto, fil
 print(boxplot_comparativo)
 ```
 
-A figura 1 ilustra a comparação visual da distribuição dos retornos mensais de cada ação contra o benchmark da Selic. Nela, é possível notar que a o tamanho das caixas de cada uma das ações é distinto, indicativo de que pode haver certa heterogeneidade nas variâncias observadas nas ações. Além disso, fica claro que apenas a ação 1 apresenta uma mediana superior à mediana da taxa selic, sendo uma possível evidencia de desempenho superior às demais ações.
+
+A Figura 1 ilustra a comparação visual da distribuição dos retornos mensais de cada ação contra o benchmark da Selic. Nela, é possível notar que a o tamanho das caixas de cada uma das ações é distinto, indicativo de que pode haver certa heterogeneidade nas variâncias observadas nas ações. Além disso, fica claro que apenas a Ação 1 apresenta uma mediana superior à mediana da taxa selic, sendo essa, uma possível evidência de desempenho superior às demais ações.
 
 #### 3.1.3 Desempenho Ajustado ao Risco
-
+Para análise gráfica dos desempenhos ajustados, foi gerado o gráfico de barras:
 ```{r histograma, fig.pos='H', fig.cap="Histograma do valor do índice de Sharpe de cada ação em relação a selic."}
 # Gráfico de barras para comparar o Índice de Sharpe
 # Usamos reorder(Acao, -Indice_Sharpe) para ordenar as barras da maior para a menor
-barchart_sharpe <- ggplot(desc_stats, aes(x = reorder(Acao, -Indice_Sharpe), y = Indice_Sharpe, fill = Acao)) +
+barchart_sharpe <- ggplot(desc_stats, aes(x = reorder(Acao, -Indice_Sharpe), 
+                                          y = Indice_Sharpe, fill = Acao)) +
   geom_bar(stat = "identity") +
-  geom_text(aes(label = round(Indice_Sharpe, 2)), vjust = ifelse(desc_stats$Indice_Sharpe > 0, 1.5, -0.5)) + # Adiciona o rótulo do valor
+  geom_text(aes(label = round(Indice_Sharpe, 2)), 
+            vjust = ifelse(desc_stats$Indice_Sharpe > 0, 1.5, -0.5)) + # Adiciona o rótulo do valor
   labs(
     title = "Comparação do Índice de Sharpe por Ação",
     subtitle = "Maior valor indica melhor retorno ajustado ao risco",
@@ -263,11 +275,11 @@ barchart_sharpe <- ggplot(desc_stats, aes(x = reorder(Acao, -Indice_Sharpe), y =
 print(barchart_sharpe)
 ```
 
-A figura 2 resume visualmente a conclusão da análise de desempenho, destacando a ação 1 como único ativo com performance positiva ajustada ao risco, corroborando com as inferências tomadas com base no boxplot.
+
+A Figura 2 resume visualmente a conclusão da análise de desempenho, destacando a Ação 1 como único ativo com performance positiva ajustada ao risco, corroborando com as evidências tomadas com base no boxplot.
 
 
-### 3.2 ANOVA e teste post-hoc TUKEY-HSD
-
+### 3.2 ANOVA e teste _post hoc_ TUKEY-HSD
 ```{r, echo=TRUE}
 retornos_long_df_para_teste <- retornos_long_df %>% rename(Retorno = Retorno_Bruto)
 
@@ -277,12 +289,15 @@ print(summary(anova_result))
 p_valor_anova <- summary(anova_result)[[1]][["Pr(>F)"]][1]
 ```
 
+O teste ANOVA resultou em um $p-valor \leq \alpha$, ou seja, a hipóstese nula é rejeitada com 95\% de confiança. Esse resultado implica que há evidências suficientes para concluirmos que há diferença significativa da média de pelo menos uma ação. Com essa conclusão, faz-se necessário o teste _post hoc_ Tukey, que realiza múltiplas comparações para avaliar quais ações diferem entre si. Para esse teste, a hipótese nula é que a média da Ação x é igual a média da Ação y. A hipóstese alternativa implica em diferença significativa entre as médias. 
+
 ```{r, echo=TRUE}
 tukey_glht <- glht(anova_result, linfct = mcp(Acao = "Tukey"))
 summary(tukey_glht)
 ```
+Analisando os p-valores da tabela acima, observa-se que as comparações entre Ação 1 e Ação 2, e entre Ação 1 e Ação 4, resultaram em valores abaixo de $\alpha$, o que implica em diferenças estatisticamente significativas. Além disso, a comparação entre as ações 1 e 5 apresentou tendência a diferença, apesar de não ser significativa ao valor de $\alpha$ determinado para o teste. Com base nas diferenças estimadas retornadas pelo teste, podemos ainda concluir que a média estimada da Ação 1 é maior que média estimada das ações 2 e 4. Podemos então esboçar os intervalos de confiança do teste de Tukey. 
 
-```{r TUKEY_CI, fig.pos='H', fig.cap="Intervalos de confiança do teste post-hoc Tukey-HSD."}
+```{r TUKEY_CI, fig.pos='H', fig.cap="Intervalos de confiança do teste _post hoc_ Tukey-HSD."}
 tukey_CI <- confint(tukey_glht, level = 0.95)
 sig <- c("Acao_2 - Acao_1", "Acao_4 - Acao_1")
 marginal <- "Acao_5 - Acao_1"
@@ -294,19 +309,27 @@ CI_plot <- plot_tukey_CI(
 print(CI_plot)
 ```
 
-A figura 3 ilustra os resultados do teste post-hoc, mostrando a estimativa da diferença de médias e o intervalo de confiança de 95% para cada par de ações, destacando as comparações classificadas como significativas (p-valor \le 0.05) e marginalmente significativas (0.05 < pvalor \le 0.1). 
 
-As comparações classificadas como significativas foram a 1-2 e 1-4, e a única marginalmente significativa foi a 1-5, todas as outras apresentando um p-valor superior as margens definidas, indicando que não há evidência suficiente para afirmar sua não equivalência estatística.
+A Figura 3 ilustra os resultados do teste _post hoc_, mostrando a estimativa das diferenças entre médias e os intervalos de confiança de 95\% para cada par de ações, destacando as comparações classificadas como significativamente diferentes ($p-valor \leq 0.05$) e marginalmente diferentes ($0.05 \leq p-valor \leq 0.1$). 
+É importante destacar que os intervalos de confiança que contêm o valor zero, indicam evidências de diferença
+nula entre as médias comparadas.
+
+Com exceção das comparações classificadas como significativamente diferentes (1-2, 1-4) ou marginalmente diferentes (1-5), as demais comparações apresentaram p-valor superior às margens definidas, indicando que não há evidência suficiente para rejeitar a hipótese de equivalência estatística entre as médias.
+
 
 ### 3.3 Validação das Premissas do Modelo
+
+Para garantir a correta aplicação do teste de hipóteses por meio do ANOVA e o _post hoc_ de Tukey, é necessário testar as premissas de normalidade e independência dos resíduos, bem como a homocedasticidade das variâncias.
+
 #### 3.3.1 Normalidade dos Resíduos
 
+Testamos a normalidade dos resíduos pelo teste de __Shapiro-Wilk__.
 ```{r, echo=TRUE}
 residuos <- residuals(anova_result)
 shapiro_results <- shapiro.test(residuos)
 print(shapiro_results)
 ```
-
+O teste aplicado aos resíduos resultou em p-valor superior ao nível de significância adotado ($\alpha = 0.05$). Dessa forma, não se rejeita a hipótese nula de normalidade, concluindo-se que os resíduos apresentam distribuição compatível com a normalidade.
 ```{r res_norm, fig.pos='H', fig.cap="Gráfico Q-Q para verificação da premissa de normalidade dos resíduos do modelo ANOVA."}
 qqPlot(residuos,
        main = "Gráfico Q-Q", # Título principal
@@ -318,19 +341,20 @@ qqPlot(residuos,
 )
 ```
 
-A figura 4 ilustra visualmente o alinhamento dos resíduos com uma distribuição normal teórica, evidenciando sua normalidade, evidênciada também pelo p-valor elevado (0.2469) obtido no teste de Shapiro-Wilk realizado.
+A Figura 4 ilustra visualmente o alinhamento dos resíduos com uma distribuição normal teórica, evidenciando sua normalidade e a interpretação do teste de __Shapiro-Wilk__. 
 
-#### 2.3.2 Homogeneidade de Variâncias (Homocedasticidade)
+#### 3.3.2 Homogeneidade de Variâncias (Homocedasticidade)
 
+Testamos a homocedasticidade das variâncias pelo teste de __Fligner-Killeen__.
 ```{r, echo=TRUE}
 fligner_test_result <- fligner.test(Retorno ~ Acao, data = retornos_long_df_para_teste)
 print(fligner_test_result)
 ```
-
-O teste de _Fligner-Killeen_ realizado retornou um p-valor de 0.1936, que não rejeita a hipótese nula de que as variâncias dos resíduos são iguais, o que contrasta com o observado no boxplot da figura 1, que demonstra certa discrepância no tamanho das caixas de cada uma das ações. Para os fins do presente estudo de caso, a premissa foi considerada satisfeita, uma vez que o teste estatístico é mais confiável que uma análise gráfica.
+O teste de __Fligner-Killeen__ realizado retornou um p-valor de 0.1936, não rejeitando a hipótese nula que determina que as variâncias das ações são iguais, o que contrasta com o observado no boxplot da Figura 1, que demonstra certa discrepância no tamanho das caixas de cada uma das ações. Para os fins do presente estudo de caso, a premissa foi considerada satisfeita, seguindo o resultado do teste estatístico.
 
 #### 3.3.3 Independência dos Resíduos
 
+Testamos a não correlação dos resíduos pelo teste de __Durbin-Watson__.
 ```{r, echo=TRUE}
 durbin_watson_result <- car::durbinWatsonTest(anova_result)
 print(durbin_watson_result)
@@ -340,13 +364,38 @@ print(durbin_watson_result)
 acf(residuos, main = "Função de Autocorrelação dos Resíduos da ANOVA")
 ```
 
-O teste de __Durbin-Watson__ realizado obteve um p-valor de 0.274, que não é suficiente para rejeitar a hipótese nula de que não há autocorrelação entre os resíduos, ou seja, os resultados do teste evidenciam a independência dos dados.
+O teste de __Durbin-Watson__ realizado obteve um p-valor de 0.274, não rejeitando a hipótese nula que determina que não há autocorrelação entre os resíduos, ou seja, os resultados do teste evidenciam a não autocorrelação dos dados. No contexto deste estudo de caso, a não autocorrelação sustenta a suposição de independência entre os dados.
 
-Além disso, a figura 5 mostra que não há correlações significativas nos resíduos na maior parte das diferentes defasagens temporais, suportando a premissa de independência. A única defasagem que apresentou correlação significativa foi a de 7 meses. 
+Além disso, a Figura 5 mostra que não há correlações significativas nos resíduos na maior parte das diferentes defasagens temporais, suportando a premissa de não autocorrelação e, neste caso, independência. A única defasagem que apresentou correlação marginalmente significativa foi a de 7 meses. 
 
-Considerando a natureza dos dados, o esperado caso de fato houvesse autocorrelação é que esta ocorresse em baixas defasagens (1, 2 ou 3 meses), uma vez que indicam efeitos de curto prazo como "momentum" ou "reversão à média". Além disso, a força da correlação é baixa, superando por muito pouco o _threshold_ de 5%, o que aliado ao efeito esperado da aleatoriedade de que pelo menos 1 a cada 20 observações em séries perfeitamente aleatórias supere a _threshold_ de significância de 5% suporta a conclusão que a significância observada nesta defasagem é fruto de aleatoriedade e não representa autocorrelação real.
+Considerando a natureza dos dados, o esperado caso de fato houvesse autocorrelação é que esta ocorresse em baixas defasagens (1, 2 ou 3 meses), o que indicaria efeitos de curto prazo como "momentum" ou "reversão à média". Além disso, a força da correlação é baixa, superando por muito pouco o _threshold_ de 5% que, aliado ao efeito esperado da aleatoriedade de que pelo menos 1 a cada 20 observações em séries perfeitamente aleatórias supere a _threshold_ de significância de 5%, suporta a conclusão que a significância observada nesta defasagem é fruto de aleatoriedade e não representa autocorrelação real.
+
+### 3.4 Tamanho do efeito e poder do teste
+
+``` {r, echo=TRUE}
+sigma   <- 0.01 # max desvio padrao intra grupos
+delta   <- 0.01 # para um tamanho minimamente relevante de 1 des. pad. 
+
+tau <- c(-delta * 4 / 5, 
+         rep(delta / 5, 4)) # define tau vector
+
+power_result <- power.anova.test(groups = length(desc_stats$Media_Retorno), n = 35, 
+                                 between.var = var(desc_stats$Media_Retorno), 
+                                 within.var = sigma^2)
+print(paste("Poder do teste: ", power_result[6]))
+```
+A análise de poder estatístico indicou que o teste ANOVA apresentou um poder muito elevado (98.6\%), conferindo alta sensibilidade a efeitos que fariam rejeitar a hipótese nula. Podemos concluir assim, que o risco de não detectar uma diferença real entre os grupos é baixo. Dessa forma a probabilidade de cometermos um erro de falso negativo é pequena (1.4\%).    
 
 ## 4. Conclusões
+
+Com base na análise estatística realizada, foi possível identificar diferenças significativas entre os retornos médios das ações avaliadas. A aplicação do teste ANOVA resultou em rejeição da hipótese nula de igualdade das médias, indicando que pelo menos uma das ações apresenta desempenho médio diferente das demais.
+
+O teste _post hoc_ de Tukey HSD revelou que a Ação 2 e a Ação 4 possuem retornos médios estatisticamente menores que a Ação 1, enquanto as demais comparações não apresentaram diferenças significativas, embora a Ação 5 tenha exibido tendência marginal de diferença em relação à Ação 1. Esses resultados corroboram a análise exploratória e o desempenho ajustado ao risco, que já indicavam a Ação 1 como o ativo de melhor rentabilidade e relação risco-retorno no período analisado.
+
+As verificações de normalidade (teste de __Shapiro–Wilk__), homocedasticidade (teste de __Fligner–Killeen__) e independência dos resíduos (teste de __Durbin–Watson__) confirmaram que as premissas do modelo ANOVA foram atendidas, garantindo a validade das conclusões inferenciais. Além disso, a análise de potência do teste evidenciou que o experimento possui alta capacidade de detecção de diferenças reais entre as médias.
+
+Dessa forma, conclui-se que, no horizonte temporal de 36 meses analisado, a Ação 1 se destacou de forma consistente como a alternativa mais vantajosa, apresentando retorno médio superior e melhor desempenho ajustado ao risco. Assim, sob a ótica estatística e considerando o conjunto de evidências apresentadas, a Ação 1 é a opção mais favorável para investimento entre os ativos avaliados neste estudo de caso.
+
 
 ## Apendice A - Funções dos integrantes
 - Isaac: Responsável pelo projeto e implementação do estudo de caso, esboçar o relatório e discutir a realização do estudo, bem como seus resultados;
