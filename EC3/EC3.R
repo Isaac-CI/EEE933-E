@@ -105,7 +105,7 @@ res_list <- list()
 idx <- 1
 
 for(d in 2:250){
-  print("Rodando dimensão:", d, "\n")
+  cat("Rodando dimensão:", d, "\n")
   inst <- instancias[[paste0("dim_", d)]]
   
   for(r in 1:n_runs){
