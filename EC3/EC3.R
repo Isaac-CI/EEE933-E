@@ -135,8 +135,13 @@ for(d in 2:250){
 ################################################################################
 ## Formatando dados gerados
 
+# Caso já exista o arquivo e deseje le-lo
+data <- read.table("resultados_rosenbrock.csv",
+                   header = TRUE)
+
 # Data final no formato: Algorithm | Result | Group | Replication
 data <- do.call(rbind, res_list)
+
 
 # Ordenar colunas
 data$Algorithm <- factor(data$Algorithm, levels = c("Alg1", "Alg2"))
@@ -144,11 +149,6 @@ data$Group     <- factor(data$Group, levels = as.character(2:249))
 
 # Salvar no arquivo .csv
 write.csv(data, "resultados_rosenbrock.csv", row.names = FALSE)
-
-# Caso já exista o arquivo e deseje le-lo
-data <- read.table("resultados_rosenbrock.csv",
-                   header = TRUE)
-
 
 head(data)
 summary(data)
