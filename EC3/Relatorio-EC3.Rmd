@@ -99,9 +99,12 @@ install_github("rstudio/rmarkdown")             # you only have to install it on
 library(rmarkdown)
 render("report_template.Rmd","pdf_document")    # this renders the pdf
 ```
+## 1. Resumo
+O presente estudo avalia o impacto de duas configurações distintas (Alg1 e Alg2) do algoritmo de Evolução Diferencial (DE) no desempenho da otimização de 149 instâncias da função de Rosenbrock. A metodologia empregou um planejamento experimental com blocagem aleatória (64 blocos) e Análise de Variância (ANOVA) para comparar os algoritmos, controlando a variabilidade introduzida pelas diferentes dimensões das instâncias. Os resultados da ANOVA (R2=0.984) indicaram que a blocagem foi altamente eficaz (Eficiência ≈ 28) e que existe uma diferença estatisticamente significativa no desempenho das duas configurações (p<2e−16). As premissas do modelo (normalidade dos resíduos e homocedasticidade) foram validadas. 
 
+Uma análise pareada subsequente, utilizando o teste não paramétrico de Wilcoxon (devido à não normalidade das diferenças intra-bloco), confirmou a diferença significativa (p≈3.61×10−12). O cálculo do tamanho do efeito (Cohen’s d=2.55) revelou que a magnitude da diferença é extremamente grande. Conclui-se que o Algoritmo 1 apresenta um desempenho consistentemente superior ao Algoritmo 2, sendo a configuração recomendada para esta classe de problemas.
 
-## 1. Introdução
+## 2. Introdução
 
 Algoritmos evolucionários constituem uma ampla classe de métodos de otimização inspirados nos princípios da Teoria da Evolução de Charles Darwin. Esses métodos utilizam o conceito de população de soluções candidatas, na qual cada indivíduo representa uma possível resposta para o problema de otimização considerado. A aptidão de cada indivíduo é avaliada por meio de uma função objetivo, que quantifica a qualidade da solução proposta. A partir dessa avaliação, mecanismos análogos aos processos biológicos — como seleção, recombinação (ou reprodução) e mutação — são aplicados para promover a evolução da população ao longo das iterações, com o objetivo de explorar e refinar progressivamente o espaço de busca em direção ao ponto ótimo global.
 
@@ -111,9 +114,9 @@ Neste estudo de caso, investiga-se o impacto de diferentes configurações do al
 
 Os códigos implementados para realização do presente estudo de caso estão disponíveis no [repositório do GitHub do grupo.](https://github.com/Isaac-CI/EEE933-E/tree/EC3/EC3)
 
-## 2. Metodologia
+## 3. Metodologia
 
-### 2.1 Formulação das Hipóteses e Planejamento Experimental
+### 3.1 Formulação das Hipóteses e Planejamento Experimental
 
 O primeiro passo da análise consistiu na definição das hipóteses do teste. A hipótese nula foi formulada como a ausência de diferença significativa no desempenho dos métodos nas duas configurações, enquanto a hipótese alternativa representa a existência de tal diferença, conforme descrito abaixo:
 
@@ -124,9 +127,9 @@ H_1:\hat{\mu}_{config_1} \neq \hat{\mu}_{config_2}
 \end{cases}
 $$
 
-Para a avaliação dessas hipóteses, adotou-se uma técnica de planejamento experimental baseada em blocagem aleatória, em conjunto com a ANOVA. O objetivo do experimento é isolar o efeito dos modelos sobre o desempenho, porém reconhece-se a existência de fatores externos que também influenciam os resultados — como a complexidade e a especificidade das instâncias utilizadas. A blocagem permite controlar essa variabilidade não controlada, separando-a da variação de interesse e, assim, aumentando a precisão e o poder estatístico do teste.
+Para a avaliação dessas hipóteses, adotou-se uma técnica de planejamento experimental, baseada em blocagem aleatória, em conjunto com a ANOVA. O objetivo do experimento é isolar o efeito dos modelos sobre o desempenho, porém reconhece-se a existência de fatores externos que também influenciam os resultados — como a complexidade e a especificidade das instâncias utilizadas. A blocagem permite controlar essa variabilidade não controlada, separando-a da variação de interesse e, assim, aumentando a precisão e o poder estatístico do teste.
 
-### 2.2 Tamanhos Amostrais
+### 3.2 Tamanhos Amostrais
 
 Para determinar o tamanho amostral necessário, foram utilizadas as especificações fornecidas no enunciado do estudo de caso:
 
@@ -171,7 +174,7 @@ sum(sapply(blocos, length))
 
 Com base nos cálculos, foi determinado que seriam necessários 64 blocos, dos quais 21 conteriam 3 instâncias e 43 conteriam 2 instâncias, de modo que as 149 instâncias fossem distribuídas de forma equilibrada entre os blocos. O número de repetições de cada algoritmo por instância foi escolhido como 30, um valor típico aplicado nessa técnica de planejamento de experimentos.
 
-### 2.2 Instâncias de Teste e Configurações dos Modelos
+### 3.3 Instâncias de Teste e Configurações dos Modelos
 
 Com o planejamento experimental definido e os parâmetros da blocagem calculados, foram geradas funções de Rosenbrock com dimensões variando de 2 a 150. Cada uma dessas funções representa uma instância independente do problema, utilizada para avaliar o desempenho dos algoritmos de otimização em diferentes níveis de complexidade.
 
@@ -264,7 +267,7 @@ run_one <- function(alg_label, inst, seed = NULL, mutpars, recpars){
 }
 ```
 
-### 2.3 Geração e Formatação dos Dados
+### 3.4 Geração e Formatação dos Dados
 
 Com as instâncias e configurações definidas, iniciou-se a etapa de execução experimental e coleta de resultados. Para cada bloco gerado anteriormente, os dois algoritmos foram avaliados em instâncias distintas de diferentes dimensões. Cada combinação algoritmo–bloco foi executada 30 vezes a fim de capturar a variabilidade estocástica inerente aos métodos evolutivos e permitir uma análise estatística mais robusta.
 
@@ -367,6 +370,15 @@ write.csv(data, "resultados_rosenbrock_medias.csv", row.names = FALSE)
 write.csv(raw_results, "resultados_rosenbrock_raw.csv", row.names = FALSE)
 ```
 
+```{r, echo=FALSE, eval=TRUE}
+# Carrega os dados que foram gerados e salvos anteriormente
+data <- read.csv("resultados_rosenbrock_medias.csv")
+
+# Ordenar colunas
+data$Algorithm <- factor(data$Algorithm, levels = c("Alg1", "Alg2"))
+data$Block     <- factor(data$Block, levels = as.character(1:64))
+```
+
 ```{r, echo=TRUE, eval=TRUE}
 head(data)
 
@@ -374,9 +386,9 @@ aggdata <- data
 summary(aggdata)
 ```
 
-## 3 Resultados e discussão
+## 4 Resultados e discussão
 
-### 3.1 Análise dos Dados
+### 4.1 Análise dos Dados
 
 Com os resultados obtidos nas simulações, foi possível visualizar o desempenho de cada um dos modelos por bloco, como pode ser visto abaixo.
 
@@ -406,7 +418,7 @@ De maneira geral, ambos os algoritmos apresentaram comportamentos oscilatórios 
 
 Assim, a análise gráfica preliminar sugere que o Alg1 pode ser mais eficiente em média, mas uma avaliação estatística mais detalhada é necessária para confirmar se essa diferença é significativa.
 
-### 3.2 Blocagem + ANOVA
+### 4.2 Blocagem + ANOVA
 
 Para avaliar estatisticamente a diferença de desempenho entre os algoritmos, utilizou-se a ANOVA com blocagem, que permite analisar o efeito do fator experimental (os algoritmos, $\tau$) enquanto se controlam as variações específicas das instâncias (fator bloqueado, $\beta$). O modelo considera a contribuição de cada fator na resposta de acordo com a seguinte formulação:  
 
@@ -464,15 +476,15 @@ b           <- length(unique(aggdata$Block))
 
 Esse valor indica que a blocagem foi altamente eficaz, pois grande parte da variabilidade nos resultados causada pelas diferenças entre as instâncias foi controlada, aumentando a sensibilidade do teste ANOVA para detectar diferenças reais de desempenho entre os algoritmos.
 
-### 3.3 Validação das Premissas do Modelo
+### 4.3 Validação das Premissas do Modelo
 
-O teste ANOVA é paramétrico e, portanto, é necessário verificar algumas premissas fundamentais para garantir a validade dos resultados. As principais premissas são anormalidade dos resíduose a homocedasticidade (variância constante dos erros).
+O teste ANOVA é paramétrico, portanto, é necessário verificar algumas premissas fundamentais para garantir a validade dos resultados. As principais premissas são anormalidade dos resíduose a homocedasticidade (variância constante dos erros).
 
-#### 3.3.1 Normalidade dos Resíduos:
+#### 4.3.1 Normalidade dos Resíduos:
 
 A forma mais padrão para verificação de normalidade é através do teste de *Shapiro–Wilk*, que avalia a hipótese nula de que os resíduos seguem uma distribuição normal. Valores do *p*-valor acima do nível de significância (geralmente 0,05) indicam que não há evidências suficientes para rejeitar a normalidade.
 
-No caso em análise, o teste de *Shapiro–Wilk* apresentou W = 0.99622 e *p*-value = 0.9841, o que é muito superior a 0,05. Assim, não rejeita-se a hipótese nula, concluindo-se que os resíduos seguem uma distribuição aproximadamente normal.
+No caso em análise, o teste de *Shapiro–Wilk* apresentou W = 0.99622 e *p*-value = 0.9841, o que é muito superior a 0,05. Assim, não se rejeita a hipótese nula, concluindo-se que os resíduos seguem uma distribuição aproximadamente normal.
 
 ```{r, echo=TRUE, eval=TRUE}
 ## Validacao de Premissas e Teste Pareado
@@ -496,7 +508,7 @@ knitr::include_graphics("normPlot.png")
 
 Na figura acima, o Q-Q plot mostra que a maior parte dos resíduos segue aproximadamente a linha teórica, indicando que não há grandes desvios da normalidade. Alguns pontos extremos (outliers) estão presentes, mas não comprometem significativamente o modelo, considerando o tamanho da amostra. Além disso, os gráficos de resíduos vs. valores ajustados e resíduos vs. níveis do fator Algorithm não mostram padrões sistemáticos claros, o que reforça a hipótese de que os resíduos podem ser considerados normalmente distribuídos. Dessa forma, a premissa de normalidade dos resíduos é aceitável, permitindo a aplicação do teste ANOVA com blocagem de forma confiável.
 
-#### 3.3.2 Homogeneidade de Variâncias (Homocedasticidade):
+#### 4.3.2 Homogeneidade de Variâncias (Homocedasticidade):
 
 A homocedasticidade, ou seja, a constância da variância dos resíduos ao longo dos valores ajustados e entre os níveis dos fatores, é uma premissa fundamental para a validade do teste ANOVA. O gráfico Scale-Location (raiz do valor absoluto dos resíduos padronizados vs. valores ajustados), apresentado acima, mostra uma leve curva, sugerindo que a variância dos resíduos não é perfeitamente constante. No entanto, a dispersão geral dos pontos é relativamente uniforme, sem grandes agrupamentos ou tendências abruptas. Isso indica que a heterocedasticidade, se presente, é moderada.
 
@@ -505,14 +517,15 @@ O gráfico Residuals vs Factor Levels reforça essa conclusão, mostrando que os
 Para verificar a homocedasticidade de forma quantitativa, pode-se realizar o teste de *Fligner-Killeen*. O *p*-valor encontrado foi de 0.9705, muito maior que 0.05, não sendo capaz, portanto, de rejeitar a hipótese de homocedasticidade.
 
 ```{r, echo=TRUE, eval=TRUE}
+group <- aggdata$Algorithm
 fligner.test(res ~ group)
 ```
 
-### 3.4 Tamanho do Efeito
+### 4.4 Tamanho do Efeito
 
 Nesta etapa, buscou-se confirmar o resultado obtido com o modelo ANOVA por meio de uma análise complementar bloco a bloco, utilizando um teste pareado e o cálculo do tamanho do efeito (Cohen’s d). O objetivo é avaliar se, de forma consistente entre os blocos, há diferença significativa e relevante entre os algoritmos.
 
-#### 3.4.1 Teste Pareado:
+#### 4.4.1 Teste Pareado:
 
 Cada bloco representa um conjunto de observações em condições semelhantes, permitindo comparar diretamente o desempenho dos dois algoritmos.  
 Para cada bloco $j$, foi calculada a diferença:
@@ -564,7 +577,7 @@ Portanto, aplicou-se o teste de Wilcoxon pareado, que não depende da suposiçã
 wilcox.test(wide$Y.Alg2, wide$Y.Alg1, paired = TRUE)
 ```
 
-#### 3.4.2 Cálculo do Tamanho do Efeito:
+#### 4.4.2 Cálculo do Tamanho do Efeito:
 
 Embora o teste de Wilcoxon indique significância estatística, é importante quantificar a magnitude prática dessa diferença.  
 Para isso, calculou-se o índice de Cohen’s d, definido por:
@@ -588,7 +601,7 @@ cohen_d <- diff_mean / diff_sd
 cohen_d
 ```
 
-## 4. Conclusões
+## 5. Conclusões
 
 Os resultados obtidos neste estudo de caso demonstraram de forma clara a eficácia da aplicação conjunta da técnica de blocagem e da análise de variância (ANOVA) na comparação de diferentes configurações do algoritmo de Evolução Diferencial (DE). A blocagem mostrou-se altamente eficiente — com um índice de eficiência próximo a 28 —, evidenciando que grande parte da variabilidade entre as instâncias foi controlada, o que aumentou a sensibilidade do teste estatístico.
 
