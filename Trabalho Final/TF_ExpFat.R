@@ -65,7 +65,7 @@ summary(data_xgb)
 library(ggplot2)
 
 # Plot grafico de AUC LR
-ggplot(data_lr,
+p_lr <- ggplot(data_lr,
        aes(x = BAL,
            y = AUC_LR,
            fill = LIN)) +
@@ -86,7 +86,7 @@ ggplot(data_lr,
   )
 
 # Plot grafico de AUC SVM
-ggplot(data_svm,
+p_svm <- ggplot(data_svm,
        aes(x = BAL,
            y = AUC_SVM,
            fill = LIN)) +
@@ -107,7 +107,7 @@ ggplot(data_svm,
   )
 
 # Plot grafico de AUC RF
-ggplot(data_rf,
+p_rf <- ggplot(data_rf,
        aes(x = BAL,
            y = AUC_RF,
            fill = LIN)) +
@@ -128,7 +128,7 @@ ggplot(data_rf,
   )
 
 # Plot grafico de AUC XGBoost
-ggplot(data_xgb,
+p_xgb <- ggplot(data_xgb,
        aes(x = BAL,
            y = AUC_XGB,
            fill = LIN)) +
@@ -153,7 +153,7 @@ ggplot(data_xgb,
 ## Teste de Hipósteses ExpFat Regressao Linear
 
 model_lr <- aov(data_lr$AUC_LR~ (DIM + BAL + LIN + NOISE)^4,
-             data = data_lr)
+                data = data_lr)
 summary(model_lr)
 summary.lm(model_lr)$r.squared
 
@@ -199,7 +199,7 @@ text(x = qq.obj$x,
 ## Teste de Hipósteses ExpFat SVM
 
 model_svm <- aov(data_svm$AUC_SVM~ (DIM + BAL + LIN + NOISE)^4,
-                data = data_svm)
+                 data = data_svm)
 summary(model_svm)
 summary.lm(model_svm)$r.squared
 
@@ -244,7 +244,7 @@ text(x = qq.obj$x,
 ## Teste de Hipósteses ExpFat Random Forest
 
 model_rf <- aov(data_rf$AUC_RF~ (DIM + BAL + LIN + NOISE)^4,
-                 data = data_rf)
+                data = data_rf)
 summary(model_rf)
 summary.lm(model_rf)$r.squared
 
@@ -329,4 +329,3 @@ text(x = qq.obj$x,
      pos = 4,
      offset = 0.4,
      cex = 0.9)
-
